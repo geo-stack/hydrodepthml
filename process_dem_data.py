@@ -58,9 +58,7 @@ import geopandas as gpd
 
 # ---- Local imports.
 from hdml import __datadir__ as datadir
-from hdml.gishelpers import (
-    get_dem_filepaths, multi_convert_hgt_to_geotiff,
-    )
+from hdml.gishelpers import get_dem_filepaths, multi_convert_hgt_to_geotiff
 from hdml.ed_helpers import earthaccess_login
 
 
@@ -143,12 +141,12 @@ for i, zip_name in enumerate(zip_names):
     zip_filepath = HGT_DIR / zip_name
     tif_filepath = (TIF_DIR / zip_name).with_suffix('.tif')
 
-    # Skip if tile was already downloaded.
+    # Skip if tile was already downloaded or tif already exists.
     if tif_filepath.exists():
         print(f'{progress} Skipping because tif file already exists...')
         continue
 
-    if zip_filepath.exists() or tif_filepath.exists():
+    if zip_filepath.exists():
         print(f'{progress} Skipping because hgt file already exists...')
         zip_fpaths.append(zip_filepath)
         tif_fpaths.append(tif_filepath)
