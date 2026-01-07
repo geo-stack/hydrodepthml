@@ -16,8 +16,7 @@
 # precipitation) for multiple nested basin levels to support water resources
 # management, modeling, and environmental assessment.
 
-# Here we download all three layers of HydroATLAS (BasinATLAS, RiverATLAS,
-# and LakeATLAS) in geodatabase format.
+# Here we download all BasinATLAS layer in geodatabase format.
 
 # See https://www.hydrosheds.org/products/hydrobasins.
 
@@ -83,15 +82,11 @@ if not extract_dir.exists():
 # Clip the basins to the African continent.
 
 africa_simple_path = datadir / 'coastline' / 'africa_landmass_simple.gpkg'
-
 if not africa_simple_path.exists():
-    africa_gdf = gpd.read_file(
-        datadir / 'coastline' / 'africa_landmass_simple.gpkg')
-    africa_simple = africa_gdf.buffer(5000)
-    africa_simple = africa_simple.buffer(-5000)
-    africa_simple = africa_simple.simplify(1000, preserve_topology=False)
-    africa_simple.to_file(africa_simple_path)
-
+    raise FileNotFoundError(
+        "Make sure to run 'process_usgs_coastal.py' to generate the "
+        "the 'africa_landmass_simple.gpkg' file."
+        )
 africa_gdf = gpd.read_file(africa_simple_path)
 
 basins_all_path = extract_dir / 'BasinATLAS_v10.gdb'
