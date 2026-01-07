@@ -28,27 +28,43 @@ import geopandas as gpd
 import pandas as pd
 
 # ---- Local imports.
-from sahel import __datadir__ as datadir
+from hdml import __datadir__ as datadir
 
+COAST_DIR = datadir / 'coastline'
+COAST_DIR.mkdir(parents=True, exist_ok=True)
 
 # %% Extract global islands database
 
 print("Extract USGS global islands database...")
-coast_dir = datadir / 'coastline'
 
 # Extract with 7zip (because zipfile does not support the 'mpk' format)
 exepath = datadir / '7za.exe'
 
 # Extract the .zip archive.
-zip_path = coast_dir / 'USGSEsriWCMC_GlobalIslands_v3_mpk.zip'
-command = f'"{exepath}" x "{zip_path}" -o"{coast_dir}"'
+zip_fname = 'USGSEsriWCMC_GlobalIslands_v3_mpk.zip'
+zip_path = COAST_DIR / zip_fname
+zip_url = 'https://www.sciencebase.gov/catalog/item/63bdf25dd34e92aad3cda273'
+
+if not zip_path.exists():
+    raise FileNotFoundError(
+        f"\n[USGS Global Islands Database Missing]\n"
+        f"\nCould not locate required ZIP archive:\n"
+        f"    {zip_path}\n"
+        f"\nTo resolve:\n"
+        f"  1. Download the file '{zip_fname}' from:\n"
+        f"     {zip_url}\n"
+        f"  2. Move it to the folder:\n"
+        f"     {COAST_DIR}\n"
+        )
+
+command = f'"{exepath}" x "{zip_path}" -o"{COAST_DIR}"'
 result = subprocess.run(
     command, capture_output=True, text=True, shell=True, check=True
     )
 
 # Extract the .mpk archive.
-mpk_path = coast_dir / 'USGSEsriWCMC_GlobalIslands_v3.mpk'
-extract_dir = coast_dir / 'USGSEsriWCMC_GlobalIslands_v3'
+mpk_path = COAST_DIR / 'USGSEsriWCMC_GlobalIslands_v3.mpk'
+extract_dir = COAST_DIR / 'USGSEsriWCMC_GlobalIslands_v3'
 if extract_dir.exists():
     shutil.rmtree(extract_dir)
 extract_dir.mkdir(parents=True, exist_ok=True)
@@ -82,7 +98,7 @@ if ADD_BIG_ISLANDS:
     gdf_big_isl = gdf_big_isl.cx[
         africa_bbox[0] - 10**6:africa_bbox[2] + 10**6,
         africa_bbox[1] - 10**6:africa_bbox[3] + 10**6
-    ]
+        ]
 
     gdf_africa = gpd.GeoDataFrame(
         pd.concat([gdf_africa, gdf_big_isl], ignore_index=True),
@@ -91,23 +107,27 @@ if ADD_BIG_ISLANDS:
 
 # Reproject and save.
 gdf_africa = gdf_africa.to_crs('ESRI:102022')  # Africa Albers Equal Area Conic
-gdf_africa.to_file(coast_dir / 'africa_landmass.gpkg', driver='GPKG')
+gdf_africa.to_file(COAST_DIR / 'africa_landmass.gpkg', driver='GPKG')
 
 shutil.rmtree(extract_dir)
 
 # %% Simplify geometry
 
-# Create a simplified version of the Afican continent geometry. This will
-# be used later when we will be clipping the subbasins to the African
-# continent. Using the complex geometry make the clipping operation very long.
+print('Creating a simplified geometry of the African continent...')
+
+# Create a simplified geometry of the African continent to speed up
+# spatial operations. The original, highly detailed geometry makes clipping
+# subbasins to Africa slow (in 'process_hydro_basins.py'). Buffering and
+# simplifying reduces complexity, making subsequent processing much faster.
 
 africa_simple_path = datadir / 'coastline' / 'africa_landmass_simple.gpkg'
-if not africa_simple_path.exists():
-    gdf_africa = gpd.read_file(coast_dir / 'africa_landmass.gpkg')
 
-    gdf_africa_simple = gdf_africa.buffer(5000)
-    gdf_africa_simple = gdf_africa_simple.buffer(-5000)
-    gdf_africa_simple = gdf_africa_simple.simplify(
-        1000, preserve_topology=False)
+# Simplify the geometry by buffering outward and inward (to remove small
+# geometry artifacts), then apply a topology-ignoring simplification.
 
-    gdf_africa_simple.to_file(africa_simple_path)
+gdf_africa = gpd.read_file(COAST_DIR / 'africa_landmass.gpkg')
+gdf_africa_simple = gdf_africa.buffer(5000)
+gdf_africa_simple = gdf_africa_simple.buffer(-5000)
+gdf_africa_simple = gdf_africa_simple.simplify(1000, preserve_topology=False)
+
+gdf_africa_simple.to_file(africa_simple_path)
