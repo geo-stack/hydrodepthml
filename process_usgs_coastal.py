@@ -94,3 +94,20 @@ gdf_africa = gdf_africa.to_crs('ESRI:102022')  # Africa Albers Equal Area Conic
 gdf_africa.to_file(coast_dir / 'africa_landmass.gpkg', driver='GPKG')
 
 shutil.rmtree(extract_dir)
+
+# %% Simplify geometry
+
+# Create a simplified version of the Afican continent geometry. This will
+# be used later when we will be clipping the subbasins to the African
+# continent. Using the complex geometry make the clipping operation very long.
+
+africa_simple_path = datadir / 'coastline' / 'africa_landmass_simple.gpkg'
+if not africa_simple_path.exists():
+    gdf_africa = gpd.read_file(coast_dir / 'africa_landmass.gpkg')
+
+    gdf_africa_simple = gdf_africa.buffer(5000)
+    gdf_africa_simple = gdf_africa_simple.buffer(-5000)
+    gdf_africa_simple = gdf_africa_simple.simplify(
+        1000, preserve_topology=False)
+
+    gdf_africa_simple.to_file(africa_simple_path)
