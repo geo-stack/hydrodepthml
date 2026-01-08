@@ -6,8 +6,15 @@
 # The World Bank Group and is licensed under the terms of the MIT license.
 #
 # For inquiries, contact: info@geostack.ca
-# Repository: https://github.com/geo-stack/sahel_water_table_ml
+# Repository: https://github.com/geo-stack/hydrodepthml
 # =============================================================================
+
+"""
+Helper utilities to read, clean, transform and plot water-table-depth (WTD)
+observations. Includes functions to load per-country spreadsheets, normalize
+date fields, create GeoDataFrames, filter bad points, and generate summary
+plots (histograms, spatial diagnostics).
+"""
 
 # ---- Standard imports
 from pathlib import Path
@@ -22,35 +29,16 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
 
-# ---- Local imports
-from hdml import __datadir__ as datadir
-
-"""
-wtd_helpers.py
-
-Helper utilities to read, clean, transform and plot water-table-depth (WTD)
-observations. Includes functions to load per-country spreadsheets, normalize
-date fields, create GeoDataFrames, filter bad points, and generate summary
-plots (histograms, spatial diagnostics).
-
-Public functions
-----------------
-create_wtd_obs_dataset
-read_obs_wl
-plot_wl_hist
-generate_wl_hist_figures
-"""
-
 
 COUNTRIES = ['Benin', 'Burkina', 'Guinee', 'Mali', 'Niger', 'Togo', 'Chad']
 TARGET_CRS = "ESRI:102022"  # Africa Albers Equal Area Conic
 
 
-def create_wtd_obs_dataset(output: Path | str = None):
+def create_wtd_obs_dataset(datadir: Path | str):
     dfs = []
     for country in COUNTRIES:
         print(f'Loading WTD data for {country}...')
-        filename = datadir / 'data' / f'{country}.xlsx'
+        filename = datadir / f'{country}.xlsx'
         temp = read_obs_wl(filename)
         temp['country'] = country
         dfs.append(temp)
@@ -70,7 +58,7 @@ def create_wtd_obs_dataset(output: Path | str = None):
 
     # Filter bad points.
     print('Filtering bad points...')
-    filename = datadir / 'data' / 'bad_obs_data.xlsx'
+    filename = datadir / 'bad_obs_data.xlsx'
     bad_pts_df = pd.read_excel(
         filename,
         dtype={'COUNTRY': str, 'ID': str}
@@ -100,11 +88,6 @@ def create_wtd_obs_dataset(output: Path | str = None):
 
     print(f"Final dataset has {len(filt_pts_gdf)} points "
           f"(from {original_count}).")
-
-    # Saving to geojson.
-    if output is not None:
-        print('Saving WTD dataset to geojson...')
-        filt_pts_gdf.to_file(output, driver="GeoJSON")
 
     return filt_pts_gdf
 
@@ -235,14 +218,14 @@ def plot_wl_hist(df: pd.DataFrame, country: str):
     return fig
 
 
-def generate_wl_hist_figures():
+def generate_wl_hist_figures(datadir: Path | str):
     countries = ['Benin', 'Burkina', 'Guinee', 'Mali', 'Niger', 'Togo']
     for country in countries:
         filename = osp.join(datadir, 'data', f'{country}.xlsx')
         df = read_obs_wl(filename)
         fig = plot_wl_hist(df, country)
 
-        filepath = datadir / 'data' / f'wl_obs_count_{country}.png'
+        filepath = datadir / f'wl_obs_count_{country}.png'
         if not filepath.exists():
             fig.savefig(filepath, dpi=220)
 
@@ -250,7 +233,7 @@ def generate_wl_hist_figures():
     dfs = []
     for country in countries:
         print(f'Loading WTD data for {country}...')
-        filename = datadir / 'data' / f'{country}.xlsx'
+        filename = datadir / f'{country}.xlsx'
         temp = read_obs_wl(filename)
         temp['country'] = country
         dfs.append(temp)
@@ -260,12 +243,6 @@ def generate_wl_hist_figures():
 
     fig = plot_wl_hist(df, 'all countries')
 
-    filepath = datadir / 'data' / 'wl_obs_count_all.png'
+    filepath = datadir / 'wl_obs_count_all.png'
     if not filepath.exists():
         fig.savefig(filepath, dpi=220)
-
-
-if __name__ == '__main__':
-    gdf = create_wtd_obs_dataset(
-        output=datadir / 'data' / "wtd_obs_all.geojson"
-        )
