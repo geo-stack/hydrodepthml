@@ -34,7 +34,44 @@ COUNTRIES = ['Benin', 'Burkina', 'Guinee', 'Mali', 'Niger', 'Togo', 'Chad']
 TARGET_CRS = "ESRI:102022"  # Africa Albers Equal Area Conic
 
 
-def create_wtd_obs_dataset(datadir: Path | str):
+def create_wtd_obs_dataset(
+        datadir: Path, clip_to_geom: Path
+        ) -> gpd.GeoDataFrame:
+    """
+    Load, assemble, and filter water table depth (WTD) observation datasets
+    rom multiple countries.
+
+    This function reads WTD observations stored as Excel files (one per
+    country), combines them into a single GeoDataFrame, reprojects to a
+    common CRS, removes known bad observations, and optionally clips
+    the dataset to a provided spatial geometry (e.g., study area boundary).
+
+    Parameters
+    ----------
+    datadir : Path
+        Path to the directory containing country-level Excel files
+        (e.g., 'Benin.xlsx', 'Mali.xlsx'). The directory should also contain
+        a file named 'bad_obs_data.xlsx' with columns 'COUNTRY' and 'ID'
+        identifying observations to exclude.
+    clip_to_geom : Path, optional
+        Path to a vector file (GeoPackage, Shapefile, etc.) defining the
+        spatial extent to which observations should be clipped. Points falling
+        outside this geometry are removed.  If None, no spatial clipping
+        is applied (default:  None).
+
+    Returns
+    -------
+    gpd.GeoDataFrame
+        A GeoDataFrame containing all valid WTD observations, with geometries
+        in the CRS defined by TARGET_CRS (ESRI:102022 - Africa Albers Equal
+        Area Conic). Includes all original columns from the Excel files, plus
+        a 'country' column indicating the source country.
+
+    See Also
+    --------
+    read_obs_wl :  Function to read country-level observation Excel files.
+    """
+
     dfs = []
     for country in COUNTRIES:
         print(f'Loading WTD data for {country}...')
@@ -58,9 +95,8 @@ def create_wtd_obs_dataset(datadir: Path | str):
 
     # Filter bad points.
     print('Filtering bad points...')
-    filename = datadir / 'bad_obs_data.xlsx'
     bad_pts_df = pd.read_excel(
-        filename,
+        datadir / 'bad_obs_data.xlsx',
         dtype={'COUNTRY': str, 'ID': str}
         )
 
@@ -74,17 +110,19 @@ def create_wtd_obs_dataset(datadir: Path | str):
     pts_gdf = pts_gdf.loc[mask]
     print(f'Removed {np.sum(~mask)} bad points.')
 
-    # Filter points that falls outside African coastal limits.
-    africa_landmass = gpd.read_file(
-        datadir / 'coastline' / 'africa_landmass.gpkg')
-    if africa_landmass.crs != TARGET_CRS:
-        africa_landmass = africa_landmass.to_crs(TARGET_CRS)
+    # Filter points that falls outside the provided geometry.
+    if clip_to_geom is not None:
+        clip_to_gdf = gpd.read_file(clip_to_geom)
+        if clip_to_gdf.crs != TARGET_CRS:
+            clip_to_gdf = clip_to_gdf.to_crs(TARGET_CRS)
 
-    filt_pts_gdf = gpd.clip(pts_gdf, africa_landmass)
+        filt_pts_gdf = gpd.clip(pts_gdf, clip_to_gdf)
 
-    removed_count = len(pts_gdf) - len(filt_pts_gdf)
-    print(f"Removed {removed_count} points that were outside "
-          f"the African coastal limit.")
+        removed_count = len(pts_gdf) - len(filt_pts_gdf)
+        print(f"Removed {removed_count} points that were outside "
+              f"the limit of the provided geometry.")
+    else:
+        filt_pts_gdf = pts_gdf
 
     print(f"Final dataset has {len(filt_pts_gdf)} points "
           f"(from {original_count}).")
