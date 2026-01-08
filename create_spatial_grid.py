@@ -18,7 +18,7 @@ outdir.mkdir(exist_ok=True)
 
 path_vrt_reprojected = datadir / 'dem' / 'nasadem_102022.vrt'
 path_africa_geom = datadir / 'coastline' / 'africa_landmass_simple.gpkg'
-path_wtd_obs = datadir / 'data' / 'wtd_obs_all.gpkg'
+path_wtd_obs = datadir / 'wtd' / 'wtd_obs_all.gpkg'
 
 # Tiles for the whole African continent bbox.
 tiles_gdf_all = generate_tiles_bbox(
