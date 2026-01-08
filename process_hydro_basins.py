@@ -83,13 +83,9 @@ if not extract_dir.exists():
 
 # Clip the basins to the African continent.
 
-africa_simple_path = datadir / 'coastline' / 'africa_landmass_simple.gpkg'
-if not africa_simple_path.exists():
-    raise FileNotFoundError(
-        "Make sure to run 'process_usgs_coastal.py' to generate the "
-        "the 'africa_landmass_simple.gpkg' file."
-        )
-africa_gdf = gpd.read_file(africa_simple_path)
+africa_gdf = gpd.read_file(
+    datadir / 'coastline' / 'africa_landmass_simple.gpkg'
+    )
 
 basins_all_path = extract_dir / 'BasinATLAS_v10.gdb'
 
