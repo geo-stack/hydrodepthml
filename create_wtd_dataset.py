@@ -60,7 +60,7 @@ def recharge_period_from_basin_area(area_km2: float) -> int:
 gwl_gdf = create_wtd_obs_dataset()
 
 # Join information about sub-basin level 12 from the HydroATLAS database.
-basins_path = datadir / 'hydro_atlas' / 'basins_lvl12_102022.gpkg'
+basins_path = datadir / 'basins' / 'basins_lvl12_102022.gpkg'
 basins_gdf = gpd.read_file(basins_path)
 basins_gdf['basin_area_km2'] = basins_gdf.geometry.area / 1e6
 

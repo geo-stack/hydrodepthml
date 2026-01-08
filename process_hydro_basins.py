@@ -32,7 +32,7 @@ from shapely.geometry import box
 # ---- Local imports
 from hdml import __datadir__ as datadir
 
-DEST_FOLDER = datadir / 'hydro_atlas'
+DEST_FOLDER = datadir / 'basins'
 DEST_FOLDER.mkdir(parents=True, exist_ok=True)
 
 ZIP_PATH = DEST_FOLDER / 'BasinATLAS_Data_v10.gdb.zip'
