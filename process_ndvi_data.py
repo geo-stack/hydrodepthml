@@ -56,6 +56,7 @@ Outputs
 
 # ---- Standard imports
 from pathlib import Path
+import time
 from time import perf_counter
 
 # ---- Third party imports
@@ -136,11 +137,9 @@ MODIS_TILE_NAMES = [
 NDVI_DIR = datadir / 'ndvi'
 NDVI_DIR.mkdir(parents=True, exist_ok=True)
 
-HDF_DIR = NDVI_DIR / 'MODIS MOD13Q1 HDF 250m'
-HDF_DIR.mkdir(parents=True, exist_ok=True)
+HDF_DIR = Path("E:/Banque Mondiale (HydroDepthML)/MODIS MOD13Q1 HDF 250m")
 
-TIF_DIR = NDVI_DIR / 'MODIS NDVI TIF 250m'
-TIF_DIR.mkdir(parents=True, exist_ok=True)
+TIF_DIR = Path("E:/Banque Mondiale (HydroDepthML)/MODIS NDVI TIF 250m")
 
 VRT_DIR = NDVI_DIR / 'vrt'
 VRT_DIR.mkdir(parents=True, exist_ok=True)
@@ -163,11 +162,33 @@ earthaccess = earthaccess_login()
 # entire African continent.
 
 hdf_urls = {}
+ntot = len(MODIS_TILE_NAMES)
+i = 0
+print()
 for tile_name, year_from, year_to in MODIS_TILE_NAMES:
-    print(f"Getting HDF urls for tile {tile_name}...")
-    tile_hdf_urls = get_mod13q1_hdf_urls(tile_name, year_from, year_to)
+    progress = f"[{i+1:02d}/{ntot}]"
+
+    print(f"{progress} Getting HDF urls for tile {tile_name}...")
+    count = 0
+    while True:
+        try:
+            tile_hdf_urls = get_mod13q1_hdf_urls(tile_name, year_from, year_to)
+        except RuntimeError as err:
+            count += 1
+            if count > 3:
+                print(f"{progress}  Failed after {count} attempts.")
+                raise err
+            wait_time = 2 ** count  # Exponential backoff:  2, 4, 8 seconds
+            print(f"{progress} RuntimeError: The CMR query failed "
+                  f"(try #{count}). Retrying in {wait_time} seconds...")
+            time.sleep(wait_time)
+        else:
+            break
+
     hdf_urls.update(tile_hdf_urls)
-    print(f"  Found {len(tile_hdf_urls)} granules for {tile_name}")
+    print(f"{progress} Found {len(tile_hdf_urls)} granules for {tile_name}")
+
+    i += 1
 
 
 # %%
