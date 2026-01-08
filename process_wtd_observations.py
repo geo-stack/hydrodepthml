@@ -56,7 +56,10 @@ def recharge_period_from_basin_area(area_km2: float) -> int:
     return 360
 
 
-gwl_gdf = create_wtd_obs_dataset(datadir=datadir / 'wtd')
+gwl_gdf = create_wtd_obs_dataset(
+    datadir=datadir / 'wtd',
+    clip_to_geom=datadir / 'coastline' / 'africa_landmass.gpkg'
+    )
 
 # Join information about sub-basin level 12 from the HydroATLAS database.
 basins_path = datadir / 'basins' / 'basins_lvl12_102022.gpkg'
