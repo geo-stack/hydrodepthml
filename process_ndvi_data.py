@@ -9,11 +9,50 @@
 # Repository: https://github.com/geo-stack/hydrodepthml
 # =============================================================================
 
-# MODIS NDVI (MOD13A1) data from NASA EarthData is only available since the
-# year 2000 because the MODIS sensors aboard Terra and Aqua satellites were
-# launched in late 1999 and 2002, respectively.
+"""
+Download, process, and extract MODIS NDVI (MOD13Q1) data for Africa.
 
-# https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod13q1-006
+This script performs the following tasks:
+
+1. Downloads MODIS MOD13Q1 (250m, 16-day composite) HDF files
+   from NASA EarthData
+2. Extracts NDVI bands and converts them to GeoTIFF format
+3. Mosaics tiles by date and reprojects to Africa Albers Equal Area
+   Conic (ESRI:102022)
+4. Extracts basin-averaged NDVI time series for HydroATLAS level 12 sub-basins
+
+Two datasets are produced:
+
+- Training dataset ('ndvi_means_wtd_basins.h5'): Daily NDVI averages for
+    basins containing water table observations,
+    covering 2000–2025.
+- Prediction dataset ('ndvi_means_africa_basins.h5'): Daily NDVI averages for
+    all African basins, covering 2024–2025.
+
+Requirements
+------------
+- NASA EarthData account (free): https://urs.earthdata.nasa.gov/
+- MODIS tile coverage is defined in MODIS_TILE_NAMES based on observation
+  locations and prediction domain
+- HydroATLAS level 12 basins must be available (see 'process_hydro_basins.py')
+
+To use this script, you must have a valid NASA Earthdata account. You will be
+prompted to provide your Earthdata username and password for authentication.
+You can create an account for free at: https://urs.earthdata.nasa.gov/
+
+Data Source
+-----------
+MODIS MOD13Q1 Version 6.1 (Terra satellite, 250m resolution, 16-day composite)
+Documentation: https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod13q1-006
+Coverage: 2000–present (Terra launch:  late 1999).
+
+Outputs
+-------
+- 'ndvi_tiles_index.csv': Index mapping dates to individual MODIS tile GeoTIFFs
+- 'ndvi_mosaic_index.csv': Index mapping daily dates to reprojected mosaics
+- 'ndvi_means_wtd_basins.h5': Basin-averaged NDVI for training (2000–2025)
+- 'ndvi_means_africa_basins.h5': Basin-averaged NDVI for prediction (2024–2025)
+"""
 
 # ---- Standard imports
 from pathlib import Path
@@ -22,7 +61,6 @@ from time import perf_counter
 # ---- Third party imports
 from osgeo import gdal
 import pandas as pd
-from pandas.io.parquet import read_parquet
 import geopandas as gpd
 import numpy as np
 import rasterio
@@ -98,10 +136,10 @@ MODIS_TILE_NAMES = [
 NDVI_DIR = datadir / 'ndvi'
 NDVI_DIR.mkdir(parents=True, exist_ok=True)
 
-HDF_DIR = Path("E:/Banque Mondiale (HydroDepthML)/MODIS MOD13Q1 HDF 250m")
+HDF_DIR = NDVI_DIR / 'MODIS MOD13Q1 HDF 250m'
 HDF_DIR.mkdir(parents=True, exist_ok=True)
 
-TIF_DIR = Path("E:/Banque Mondiale (HydroDepthML)/MODIS NDVI TIF 250m")
+TIF_DIR = NDVI_DIR / 'MODIS NDVI TIF 250m'
 TIF_DIR.mkdir(parents=True, exist_ok=True)
 
 VRT_DIR = NDVI_DIR / 'vrt'
@@ -158,7 +196,6 @@ for hdf_name, url in hdf_urls.items():
         continue
 
     # Download the MODIS HDF file.
-
     hdf_fpath = HDF_DIR / (hdf_name + '.hdf')
     if not hdf_fpath.exists():
         print(f'{progress} Downloading MODIS HDF file...')
@@ -332,6 +369,8 @@ def extract_basins_zonal_means(
     return basin_ndvi_means
 
 
+# Calculate the daily mean NDVI for all the basins of the African continent
+# for the 2024 and 2025 years.
 ndvi_means_africa_basins = extract_basins_zonal_means(
     mosaic_index_path=mosaic_index_path,
     basins_path=datadir / 'hydro_atlas' / 'basins_lvl12_102022.gpkg',
@@ -342,6 +381,8 @@ ndvi_means_africa_basins.to_hdf(
     NDVI_DIR / 'ndvi_means_africa_basins.h5', key='ndvi', mode='w'
     )
 
+# Calculate the daily mean NDVI for the basins  where water level observations
+# are available for 2000–2025.
 ndvi_means_wtd_basins = extract_basins_zonal_means(
     mosaic_index_path=mosaic_index_path,
     basins_path=datadir / 'data' / 'wtd_basin_geometry.gpkg',
