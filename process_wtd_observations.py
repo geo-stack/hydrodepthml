@@ -105,11 +105,6 @@ print(f"Removed {removed_count} points (from {original_count}) that "
       f"were before {year_min + 1} or after {year_max - 1}.")
 print(f'Final dataset has {len(gwl_gdf)} points.')
 
-mask_mali = gwl_gdf.country == 'Mali'
-gwl_gdf = gwl_gdf.loc[mask_mali]
-print("Only keep points that are in Mali.")
-print(f"Final dataset has {len(gwl_gdf)} points.")
-
 # Save the water table observations dataset.
 gwl_gdf.to_file(datadir / "data" / "wtd_obs_all.gpkg", driver="GPKG")
 
