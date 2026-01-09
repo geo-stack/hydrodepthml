@@ -31,20 +31,24 @@ def build_zonal_index_map(
     """
     Build an index map for basin geometries relative to a raster grid.
 
-    For each basin, this computes the absolute pixel indices (rows, cols) that
-    fall inside the basin geometry.  The returned dictionary contains raster
-    metadata necessary to validate that other rasters are on the same grid.
+    For each basin, this function computes the absolute pixel
+    indices (row, col) that fall inside the basin geometry. The resulting
+    index map enables rapid extraction of raster values for each basin across
+    multiple rasters that share the same grid and coordinate system,
+    eliminating the need to re-rasterize geometries for every file (e.g.,
+    when extracting daily precipitation or NDVI time series from a stack of
+    co-registered GeoTIFFs).
 
-    By default, only pixels whose centers fall within the basin geometry
-    are included (all_touched=False), which is standard practice for
-    hydrological zonal statistics. This ensures accurate areal weighting
-    and prevents double-counting of pixels at basin boundaries.
+    By default, only pixels whose centers fall within the basin geometry are
+    included (all_touched=False). This is standard practice for hydrological
+    zonal statistics, ensuring accurate areal weighting and preventing
+    double-counting at basin boundaries.
 
-    For very small basins that do not contain any pixel centers, the function
-    falls back to all_touched=True, which includes any pixel intersected by
-    the basin polygon.  This avoids empty results at the cost of minor edge
-    over-sampling.  Basins using this fallback are flagged in the returned
-    metadata.
+    For very small basins that contain no pixel centers, the function
+    automatically falls back to all_touched=True, which includes any pixel
+    intersected by the basin boundary. This avoids empty results at the cost
+    of minor edge over-sampling. Basins requiring this fallback are flagged
+    in the returned 'basin_metadata'.
 
     Parameters
     ----------
