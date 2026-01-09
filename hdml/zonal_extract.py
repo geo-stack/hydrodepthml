@@ -13,10 +13,12 @@
 
 # ---- Standard imports
 from pathlib import Path
+from time import perf_counter
 
 # ---- Third party imports
 import numpy as np
 import geopandas as gpd
+import pandas as pd
 import rasterio
 from rasterio.features import rasterize
 from osgeo import gdal
@@ -244,6 +246,125 @@ def extract_zonal_means(
                 mean_values[i] = np.nan
 
     return mean_values, basin_ids
+
+
+def extract_basin_zonal_timeseries(
+        mosaic_index_path: Path,
+        mosaic_dir: Path,
+        basins_path: Path,
+        year_start: int,
+        year_end: int,
+        scale_factor: float = 1.0,
+        basin_id_column: str = 'HYBAS_ID'
+        ) -> pd.DataFrame:
+    """
+    Extract basin-averaged time series from a stack of georeferenced
+    raster mosaics.
+
+    Loads basin geometries and iterates through raster files (e.g., NDVI,
+    precipitation, temperature) for the specified year range, computing
+    spatial mean values for each basin using zonal statistics. This function
+    is optimized for processing large time series by pre-computing a zonal
+    index map that is reused across all rasters.
+
+    Parameters
+    ----------
+    mosaic_index_path :  Path
+        Path to CSV file mapping dates (index) to raster filenames ('file'
+        column). The index must be datetime-parseable.
+    mosaic_dir :  Path
+        Directory containing the raster mosaic files referenced in the index.
+    basins_path : Path
+        Path to vector file (GeoPackage, Shapefile) containing
+        basin geometries.
+    year_start : int
+        Start year for extraction (inclusive).
+    year_end : int
+        End year for extraction (inclusive).
+    scale_factor : float, optional
+        Multiplicative scaling factor applied to raw raster
+        values (e.g., 0.0001 for MODIS NDVI Int16 to physical units).
+        Default is 1.0 (no scaling).
+    basin_id_column : str, optional
+        Name of the column in basins_path to use as basin identifiers.
+        Default is 'HYBAS_ID'.
+
+    Returns
+    -------
+    pd.DataFrame
+        Time series DataFrame with dates as index and basin IDs as columns.
+        Each cell contains the spatial mean raster value for that basin on
+        that date.  Values are float32, with NaN for missing data.
+
+    Notes
+    -----
+    - All rasters must share the same grid, CRS, and spatial extent.
+    - The zonal index map is built once using the first mosaic file, then
+      reused for efficiency.
+    - If a mosaic file corresponds to multiple dates (e.g., 16-day composites),
+      the same values are assigned to all associated dates.
+
+    See Also
+    --------
+    build_zonal_index_map :  Build pixel indices for basin geometries
+    extract_zonal_means :  Compute spatial means using a zonal index map
+    """
+    mosaic_index = pd.read_csv(
+        mosaic_index_path,
+        index_col=0,
+        parse_dates=True,
+        dtype={'file': str}
+        )
+
+    print('Loading basin geometries...', flush=True)
+    basins_gdf = gpd.read_file(basins_path)
+    basins_gdf = basins_gdf.set_index(basin_id_column, drop=True)
+    basins_gdf.index = basins_gdf.index.astype(int)
+
+    print('Building zonal index map...', flush=True)
+    years = list(range(year_start, year_end + 1))
+    mask = (
+        (np.isin(mosaic_index.index. year, years)) &
+        (~pd.isnull(mosaic_index.file))
+        )
+
+    mosaic_fnames = np.unique(mosaic_index.file[mask])
+    zonal_index_map, _ = build_zonal_index_map(
+        raster_path=mosaic_dir / mosaic_fnames[0],
+        basin_gdf=basins_gdf
+        )
+
+    # Initialize basin time series dataframe.
+    index = mosaic_index.index[mask]
+    columns = list(basins_gdf.index)
+    basin_timeseries = pd.DataFrame(
+        data=np.full((len(index), len(columns)), np.nan, dtype='float32'),
+        index=index,
+        columns=columns
+        )
+
+    ntot = len(mosaic_fnames)
+    count = 0
+    for count, mosaic_fname in enumerate(mosaic_fnames):
+        t0 = perf_counter()
+        dates = mosaic_index.loc[mosaic_index.file == mosaic_fname].index
+
+        print(f"[{count+1:02d}/{ntot}] Processing {mosaic_fname}...", end=' ')
+
+        mean_values, basin_ids = extract_zonal_means(
+            mosaic_dir / mosaic_fname, zonal_index_map
+            )
+
+        # Apply scaling factor (e.g., for MODIS Int16 -> physical units)
+        mean_values = mean_values * scale_factor
+
+        assert list(basin_ids) == list(basin_timeseries.columns)
+        basin_timeseries.loc[dates] = mean_values.astype('float32')
+
+        t1 = perf_counter()
+        print(f'done in {t1 - t0:0.1f} sec')
+
+    return basin_timeseries
 
 
 if __name__ == '__main__':
