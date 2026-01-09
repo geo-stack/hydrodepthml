@@ -23,11 +23,11 @@ This script performs the following tasks:
 
 Two datasets are produced:
 
-- Training dataset ('ndvi_means_wtd_basins.h5'): Daily NDVI averages for
-    basins containing water table observations,
+- Prediction dataset ('ndvi_means_africa_basins_2024-2025.h5'):
+    Daily NDVI averages for all African basins, covering 2024–2025.
+- Training dataset ('ndvi_means_wtd_basins_2000-2025.h5'):
+    Daily NDVI averages for basins containing water table observations,
     covering 2000–2025.
-- Prediction dataset ('ndvi_means_africa_basins.h5'): Daily NDVI averages for
-    all African basins, covering 2024–2025.
 
 Requirements
 ------------
@@ -62,15 +62,13 @@ from time import perf_counter
 # ---- Third party imports
 from osgeo import gdal
 import pandas as pd
-import geopandas as gpd
-import numpy as np
 import rasterio
 
 # ---- Local imports
 from hdml import __datadir__ as datadir
 from hdml.ed_helpers import (
     earthaccess_login, MOD13Q1_hdf_to_geotiff, get_mod13q1_hdf_urls)
-from hdml.zonal_extract import build_zonal_index_map, extract_zonal_means
+from hdml.zonal_extract import extract_basin_zonal_timeseries
 
 # MODIS_TILE_NAMES specifies which MODIS tiles to download NDVI data for,
 # along with the year ranges:
@@ -137,9 +135,9 @@ MODIS_TILE_NAMES = [
 NDVI_DIR = datadir / 'ndvi'
 NDVI_DIR.mkdir(parents=True, exist_ok=True)
 
-HDF_DIR = Path("E:/Banque Mondiale (HydroDepthML)/MODIS MOD13Q1 HDF 250m")
+HDF_DIR = Path("F:/BanqueMondiale (HydroDepthML)/MODIS MOD13Q1 HDF 250m")
 
-TIF_DIR = Path("E:/Banque Mondiale (HydroDepthML)/MODIS NDVI TIF 250m")
+TIF_DIR = Path("F:/BanqueMondiale (HydroDepthML)/MODIS NDVI TIF 250m")
 
 VRT_DIR = NDVI_DIR / 'vrt'
 VRT_DIR.mkdir(parents=True, exist_ok=True)
@@ -317,82 +315,6 @@ mosaic_index.to_csv(mosaic_index_path)
 
 # %%
 
-def extract_basins_zonal_means(
-        mosaic_index_path: Path,
-        basins_path: Path,
-        year_start: int,
-        year_end: int
-        ):
-    """
-    Extract basin-averaged NDVI time series from MODIS mosaic files.
-
-    Loads basin geometries and NDVI mosaics for the specified year range,
-    then computes spatial mean NDVI for each basin on each date using zonal
-    statistics
-
-    Returns a DataFrame with dates as index and basin IDs (HYBAS_ID)
-    as columns.
-    """
-    mosaic_index = pd.read_csv(
-        mosaic_index_path,
-        index_col=0,
-        parse_dates=True,
-        dtype={'file': str}
-        )
-
-    print('Loading hydro atlas basins...', flush=True)
-    basins_gdf = gpd.read_file(basins_path)
-    basins_gdf = basins_gdf.set_index("HYBAS_ID", drop=True)
-    basins_gdf.index = basins_gdf.index.astype(int)
-
-    print('Building the basins zonal index map...', flush=True)
-    years = list(range(year_start, year_end + 1))
-    mask = (
-        (np.isin(mosaic_index.index.year, years)) &
-        (~pd.isnull(mosaic_index.file))
-        )
-
-    mosaic_fnames = np.unique(mosaic_index.file[mask])
-    zonal_index_map, _ = build_zonal_index_map(
-        raster_path=MOSAIC_DIR / mosaic_fnames[0],
-        basin_gdf=basins_gdf
-        )
-
-    # Initiating the basin ndvi dataframe.
-    index = mosaic_index.index[mask]
-    columns = list(basins_gdf.index)
-    basin_ndvi_means = pd.DataFrame(
-        data=np.full((len(index), len(columns)), np.nan, dtype='float32'),
-        index=index,
-        columns=columns
-        )
-
-    ntot = len(mosaic_fnames)
-    count = 0
-    for mosaic_fname in mosaic_fnames:
-        t0 = perf_counter()
-        dates = mosaic_index.loc[mosaic_index.file == mosaic_fname].index
-        # Note that because NDVI data are 16-day composite, each mosaic
-        # file is associated to more than one day (dates).
-
-        print(f"[{count+1:02d}/{ntot}] Processing {mosaic_fname}...", end=' ')
-
-        mean_ndvi, basin_ids = extract_zonal_means(
-            MOSAIC_DIR / mosaic_fname, zonal_index_map)
-        mean_ndvi = mean_ndvi * 0.0001  # MODIS Int16 scale to physical NDVI
-
-        assert list(basin_ids) == list(basin_ndvi_means.columns)
-        basin_ndvi_means.loc[dates] = mean_ndvi.astype('float32')
-
-        count += 1
-        t1 = perf_counter()
-        print(f'done in {t1 - t0:0.1f} sec')
-
-    return basin_ndvi_means
-
-
-# %%
-
 # Calculate the daily mean NDVI for all the basins of the African continent
 # for the 2024 and 2025 years.
 basins_path = datadir / 'basins' / 'basins_lvl12_102022.gpkg'
@@ -403,11 +325,14 @@ if not basins_path.exists():
         )
 
 year_start, year_end = predict_year_range
-ndvi_means_africa_basins = extract_basins_zonal_means(
+ndvi_means_africa_basins = extract_basin_zonal_timeseries(
     mosaic_index_path=mosaic_index_path,
+    mosaic_dir=MOSAIC_DIR,
     basins_path=basins_path,
     year_start=year_start,
-    year_end=year_end
+    year_end=year_end,
+    scale_factor=0.0001,   # MODIS Int16 scale to physical NDVI
+    basin_id_column='HYBAS_ID'
     )
 
 fname = f'ndvi_means_africa_basins_{year_start}-{year_end}.h5'
@@ -416,7 +341,7 @@ ndvi_means_africa_basins.to_hdf(NDVI_DIR / fname, key='ndvi', mode='w')
 
 # %%
 
-# Calculate the daily mean NDVI for the basins  where water level observations
+# Calculate the daily mean NDVI for the basins where water level observations
 # are available for 2000–2025.
 basins_path = datadir / 'wtd' / 'wtd_basin_geometry.gpkg'
 if not basins_path.exists():
@@ -426,14 +351,15 @@ if not basins_path.exists():
         )
 
 year_start, year_end = training_year_range
-ndvi_means_wtd_basins = extract_basins_zonal_means(
+ndvi_means_wtd_basins = extract_basin_zonal_timeseries(
     mosaic_index_path=mosaic_index_path,
+    mosaic_dir=MOSAIC_DIR,
     basins_path=basins_path,
     year_start=year_start,
-    year_end=year_end
+    year_end=year_end,
+    scale_factor=1,
+    basin_id_column='HYBAS_ID'
     )
 
 fname = f'ndvi_means_wtd_basins_{year_start}-{year_end}.h5'
-ndvi_means_wtd_basins.to_hdf(
-    NDVI_DIR / 'ndvi_means_wtd_basins.h5', key='ndvi', mode='w'
-    )
+ndvi_means_wtd_basins.to_hdf(NDVI_DIR / fname, key='ndvi', mode='w')
