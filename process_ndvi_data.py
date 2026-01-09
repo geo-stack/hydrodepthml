@@ -262,10 +262,15 @@ for index, row in tif_file_index.iterrows():
 
     # Define the name of the final mosaic and check if it exists.
     mosaic_path = MOSAIC_DIR / f"NDVI_MOD13Q1_{start}_{end}_ESRI102022.tif"
+
+    # Get only dates that exist in mosaic_index.
+    date_range = pd.date_range(*index)
+    valid_dates = mosaic_index.index.intersection(date_range)
+
     if mosaic_path.exists():
         print(f"[{i+1:02d}/{ntot}] Mosaic already exists for {index[0]}.")
-        mosaic_index.loc[pd.date_range(*index), 'file'] = mosaic_path.name
-        mosaic_index.loc[pd.date_range(*index), 'ntiles'] = len(tif_paths)
+        mosaic_index.loc[valid_dates, 'file'] = mosaic_path.name
+        mosaic_index.loc[valid_dates, 'ntiles'] = len(tif_paths)
         i += 1
         continue
 
@@ -302,8 +307,10 @@ for index, row in tif_file_index.iterrows():
     del ds_reproj
 
     # Update the VRT file index.
-    mosaic_index.loc[pd.date_range(*index), 'file'] = mosaic_path.name
-    mosaic_index.loc[pd.date_range(*index), 'ntiles'] = len(tif_paths)
+    date_range = pd.date_range(*index)
+    valid_dates = mosaic_index.index.intersection(date_range)
+    mosaic_index.loc[valid_dates, 'file'] = mosaic_path.name
+    mosaic_index.loc[valid_dates, 'ntiles'] = len(tif_paths)
 
     i += 1
     t1 = perf_counter()
