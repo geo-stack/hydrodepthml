@@ -320,9 +320,19 @@ mosaic_index.to_csv(mosaic_index_path)
 def extract_basins_zonal_means(
         mosaic_index_path: Path,
         basins_path: Path,
-        year_start: int, year_end: int
+        year_start: int,
+        year_end: int
         ):
+    """
+    Extract basin-averaged NDVI time series from MODIS mosaic files.
 
+    Loads basin geometries and NDVI mosaics for the specified year range,
+    then computes spatial mean NDVI for each basin on each date using zonal
+    statistics
+
+    Returns a DataFrame with dates as index and basin IDs (HYBAS_ID)
+    as columns.
+    """
     mosaic_index = pd.read_csv(
         mosaic_index_path,
         index_col=0,
@@ -330,24 +340,12 @@ def extract_basins_zonal_means(
         dtype={'file': str}
         )
 
-    basins_path = Path(basins_path)
-    if not basins_path.exists():
-        raise FileNotFoundError(
-            "Make sure to run 'process_hydro_basins.py' to generate the "
-            "the 'basins_lvl12_102022.gpkg' file."
-            )
-
     print('Loading hydro atlas basins...', flush=True)
     basins_gdf = gpd.read_file(basins_path)
     basins_gdf = basins_gdf.set_index("HYBAS_ID", drop=True)
     basins_gdf.index = basins_gdf.index.astype(int)
 
-    # Generate the basin zonal index map for the PREDICT dataset, which
-    # includes data for the whole African continent for the years defined
-    # in 'predict_year_range'.
-
     print('Building the basins zonal index map...', flush=True)
-
     years = list(range(year_start, year_end + 1))
     mask = (
         (np.isin(mosaic_index.index.year, years)) &
@@ -355,8 +353,9 @@ def extract_basins_zonal_means(
         )
 
     mosaic_fnames = np.unique(mosaic_index.file[mask])
-    zonal_index_map, bad_basin_ids = build_zonal_index_map(
-        MOSAIC_DIR / mosaic_fnames[0], basins_gdf
+    zonal_index_map, _ = build_zonal_index_map(
+        raster_path=MOSAIC_DIR / mosaic_fnames[0],
+        basin_gdf=basins_gdf
         )
 
     # Initiating the basin ndvi dataframe.
@@ -370,14 +369,16 @@ def extract_basins_zonal_means(
 
     ntot = len(mosaic_fnames)
     count = 0
-    for mosaic_name in mosaic_fnames:
+    for mosaic_fname in mosaic_fnames:
         t0 = perf_counter()
-        dates = mosaic_index.loc[mosaic_index.file == mosaic_name].index
+        dates = mosaic_index.loc[mosaic_index.file == mosaic_fname].index
+        # Note that because NDVI data are 16-day composite, each mosaic
+        # file is associated to more than one day (dates).
 
-        print(f"[{count+1:02d}/{ntot}] Processing {mosaic_name}...", end=' ')
+        print(f"[{count+1:02d}/{ntot}] Processing {mosaic_fname}...", end=' ')
 
         mean_ndvi, basin_ids = extract_zonal_means(
-            MOSAIC_DIR / mosaic_name, zonal_index_map)
+            MOSAIC_DIR / mosaic_fname, zonal_index_map)
         mean_ndvi = mean_ndvi * 0.0001  # MODIS Int16 scale to physical NDVI
 
         assert list(basin_ids) == list(basin_ndvi_means.columns)
