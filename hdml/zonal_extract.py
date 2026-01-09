@@ -298,9 +298,11 @@ def extract_basin_zonal_timeseries(
 
     Notes
     -----
-    - All rasters must share the same grid, CRS, and spatial extent.
     - The zonal index map is built once using the first mosaic file, then
       reused for efficiency.
+    - If mosaic grid properties (width, height, CRS) change during the time
+      series (e.g., switching from regional to continental coverage), the zonal
+      index map is automatically rebuilt.
     - If a mosaic file corresponds to multiple dates (e.g., 16-day composites),
       the same values are assigned to all associated dates.
 
@@ -309,6 +311,8 @@ def extract_basin_zonal_timeseries(
     build_zonal_index_map :  Build pixel indices for basin geometries
     extract_zonal_means :  Compute spatial means using a zonal index map
     """
+    zonal_index_map = None
+
     mosaic_index = pd.read_csv(
         mosaic_index_path,
         index_col=0,
@@ -316,26 +320,19 @@ def extract_basin_zonal_timeseries(
         dtype={'file': str}
         )
 
+    years = list(range(year_start, year_end + 1))
+    valid = (
+        (np.isin(mosaic_index.index. year, years)) &
+        (~pd.isnull(mosaic_index.file))
+        )
+
     print('Loading basin geometries...', flush=True)
     basins_gdf = gpd.read_file(basins_path)
     basins_gdf = basins_gdf.set_index(basin_id_column, drop=True)
     basins_gdf.index = basins_gdf.index.astype(int)
 
-    print('Building zonal index map...', flush=True)
-    years = list(range(year_start, year_end + 1))
-    mask = (
-        (np.isin(mosaic_index.index. year, years)) &
-        (~pd.isnull(mosaic_index.file))
-        )
-
-    mosaic_fnames = np.unique(mosaic_index.file[mask])
-    zonal_index_map, _ = build_zonal_index_map(
-        raster_path=mosaic_dir / mosaic_fnames[0],
-        basin_gdf=basins_gdf
-        )
-
     # Initialize basin time series dataframe.
-    index = mosaic_index.index[mask]
+    index = mosaic_index.index[valid]
     columns = list(basins_gdf.index)
     basin_timeseries = pd.DataFrame(
         data=np.full((len(index), len(columns)), np.nan, dtype='float32'),
@@ -343,9 +340,28 @@ def extract_basin_zonal_timeseries(
         columns=columns
         )
 
+    mosaic_fnames = np.unique(mosaic_index.file[valid])
     ntot = len(mosaic_fnames)
-    count = 0
     for count, mosaic_fname in enumerate(mosaic_fnames):
+        raster_path = mosaic_dir / mosaic_fname
+
+        if zonal_index_map is None:
+            print('Building zonal index map...', flush=True)
+            zonal_index_map, _ = build_zonal_index_map(
+                raster_path=raster_path, basin_gdf=basins_gdf
+                )
+        else:
+            with rasterio.open(raster_path) as src:
+                same_width = src.width == zonal_index_map['width']
+                same_height = src.height == zonal_index_map['height']
+                same_crs = src.crs.to_string() == zonal_index_map['crs']
+
+            if not (same_width and same_height and same_crs):
+                print('Re-building zonal index map...', flush=True)
+                zonal_index_map, _ = build_zonal_index_map(
+                    raster_path=raster_path, basin_gdf=basins_gdf
+                    )
+
         t0 = perf_counter()
         dates = mosaic_index.loc[mosaic_index.file == mosaic_fname].index
 
