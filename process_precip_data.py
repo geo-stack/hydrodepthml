@@ -9,14 +9,61 @@
 # Repository: https://github.com/geo-stack/sahel
 # =============================================================================
 
-"""Download daily precipitation data ."""
+"""
+Download, process, and extract CHIRPS daily precipitation data for Africa.
 
-# CHIRPS (Climate Hazards Group InfraRed Precipitation with Station data)
-# is a gridded rainfall dataset providing daily, pentadal, and monthly
-# precipitation estimates at ~0.05° resolution, starting from 1981.
-# It combines satellite imagery with in-situ station data to support climate
-# and drought monitoring applications, especially in data-scarce regions.
+This script performs the following tasks:
 
+1. Downloads CHIRPS v3.0 daily precipitation GeoTIFF files from the
+   Climate Hazards Center.
+2. Clips to Africa's bounding box and reprojects to Africa Albers Equal Area
+   Conic (ESRI:102022)
+3. Indexes files by date for efficient time series extraction
+4. Extracts basin-averaged precipitation time series for HydroATLAS
+   level 12 sub-basins
+
+Two datasets are produced:
+
+- Training dataset ('precip_means_wtd_basins_2000-2025.h5'):
+      Daily precipitation averages for basins containing water table
+      observations, covering 2000–2025.
+- Prediction dataset ('precip_means_africa_basins_2024-2025.h5'):
+      Daily precipitation averages for all African basins, covering 2024–2025
+
+Requirements
+------------
+- HydroATLAS level 12 basins must be available (see 'process_hydro_basins.py')
+- Africa landmass geometry for bounding box extraction
+  (see 'process_usgs_coastal.py')
+
+Data Source
+-----------
+CHIRPS v3.0 (Climate Hazards Group InfraRed Precipitation with Station data)
+Resolution: ~0.05° (~5.5 km at equator)
+Temporal coverage: 1981–present (daily)
+Documentation: https://www.chc.ucsb.edu/data/chirps
+Data combines satellite imagery with in-situ station data for improved
+accuracy data-scarce regions.
+
+Outputs
+-------
+- 'precip_mosaic_index.csv':
+      Index mapping dates to clipped/reprojected precipitation GeoTIFFs
+- 'precip_means_wtd_basins_2000-2025.h5':
+      Basin-averaged precipitation for training
+- 'precip_means_africa_basins_2024-2025.h5':
+      Basin-averaged precipitation for prediction
+
+Notes
+-----
+- Files are downloaded only once and skipped if they already exist
+- Precipitation values are in millimeters (mm) and require no scaling
+- Global files are clipped to Africa's bounding box to reduce storage
+  requirements
+- The script uses zonal statistics to compute spatial averages within
+  each basin
+- Update YEAR_RANGE if extending the time series beyond 2000–2025
+"""
 
 # ---- Standard imports.
 from datetime import datetime
@@ -31,18 +78,18 @@ import numpy as np
 # ---- Local imports.
 from hdml import __datadir__ as datadir
 from hdml.gishelpers import clip_and_project_raster
-from hdml.zonal_extract import build_zonal_index_map, extract_zonal_means
+from hdml.zonal_extract import extract_basin_zonal_timeseries
 
 # See https://www.chc.ucsb.edu/data/chirps.
 
-DEST_DIR = datadir / 'precip'
-DEST_DIR.mkdir(parents=True, exist_ok=True)
+PRECIP_DIR = datadir / 'precip'
+PRECIP_DIR.mkdir(parents=True, exist_ok=True)
 
 basins_gdf = gpd.read_file(datadir / "data" / "wtd_basin_geometry.gpkg")
 basins_gdf = basins_gdf.set_index("HYBAS_ID", drop=True)
 basins_gdf.index = basins_gdf.index.astype(int)
 
-tif_index_fpath = DEST_DIR / 'precip_tif_index.csv'
+mosaic_index_path = PRECIP_DIR / 'precip_mosaic_index.csv'
 
 # Read Africa landmass and get bounding box.
 africa_gdf = gpd.read_file(datadir / 'coastline' / 'africa_landmass.gpkg')
@@ -51,28 +98,21 @@ africa_bbox = africa_shape.bounds  # (minx, miny, maxx, maxy)
 
 base_url = "https://data.chc.ucsb.edu/products/CHIRPS/v3.0/daily/final/sat"
 
+YEAR_RANGE = list(range(2000, 2026))
+
 
 # %%
 
-YEAR_RANGE = range(2000, 2026)
-
 # Download the CHIRPS daily sat data for year in YEAR_RANGE.
 
-if not tif_index_fpath.exists():
-    tif_index = pd.DataFrame(
-        columns=['file'] + list(basins_gdf.index),
-        index=pd.date_range('2000-01-01', '2025-12-31')
-        )
-    tif_index.index.name = 'date'
-else:
-    tif_index = pd.read_csv(
-        tif_index_fpath, index_col=0, parse_dates=True, dtype={'file': str}
-        )
+mosaic_index = pd.DataFrame(
+    columns=['file'],
+    index=pd.date_range('2000-01-01', '2025-12-31')
+    )
+mosaic_index.index.name = 'date'
 
-# Get the list of tif files available for download on the CHIRPS server.
-
+# Fetch available CHIRPS files.
 print('Fetching available files on the CHIRPS server...')
-
 chirp_files = {}
 for year in YEAR_RANGE:
     year_url = base_url + f'/{year}'
@@ -89,7 +129,6 @@ for year in YEAR_RANGE:
     chirp_files[year] = files
 
 # Download and process the files.
-
 for year, files in chirp_files.items():
 
     print(f"Downloading CHIRPS daily precip tifs for year {year}...")
@@ -99,15 +138,17 @@ for year, files in chirp_files.items():
 
         dtime = datetime.strptime(file_url[-14:-4], '%Y.%m.%d')
 
-        global_tif_fpath = DEST_DIR / file
+        global_tif_fpath = PRECIP_DIR / file
 
-        tif_fpath = DEST_DIR / f'{year}' / file
+        tif_fpath = PRECIP_DIR / f'{year}' / file
         tif_fpath.parent.mkdir(parents=True, exist_ok=True)
 
-        tif_index.loc[dtime, 'file'] = f'{year}/{file}'
+        mosaic_index.loc[dtime, 'file'] = f'{year}/{file}'
 
         # Skip if already downloaded.
-        if tif_fpath.exists():
+        if mosaic_index.exists():
+            print(f"[{str(dtime)[:10]}] Precip data already "
+                  f"downloaded and processed....")
             continue
 
         print(f"[{str(dtime)[:10]}] Downloading tif file...", end='')
@@ -118,13 +159,15 @@ for year, files in chirp_files.items():
             with open(global_tif_fpath, "wb") as fp:
                 fp.write(resp.content)
         except Exception as err:
-            tif_index.loc[dtime, 'file'] = np.nan
-            tif_index.to_csv(tif_index_fpath)
+            mosaic_index.loc[dtime, 'file'] = np.nan
+            mosaic_index.to_csv(mosaic_index_path)
             raise err
 
         clip_and_project_raster(
-            global_tif_fpath, tif_fpath,
-            output_crs='ESRI:102022', clipping_bbox=africa_bbox
+            global_tif_fpath,
+            tif_fpath,
+            output_crs='ESRI:102022',
+            clipping_bbox=africa_bbox
             )
 
         global_tif_fpath.unlink()
@@ -133,42 +176,60 @@ for year, files in chirp_files.items():
 
 print('All precip tif file downloaded successfully.')
 
-print('Saving tif index dataframe to file...', end='')
-tif_index.to_csv(tif_index_fpath)
+print('Saving mosaic index to file...', end='')
+mosaic_index.to_csv(mosaic_index_path)
 print('done')
 
 # %%
 
-# Generate the basin zonal index map.
+# Calculate the daily mean precipitation for all the basins of the African
+# continent for the 2024 and 2025 years.
+basins_path = datadir / 'basins' / 'basins_lvl12_102022.gpkg'
+if not basins_path.exists():
+    raise FileNotFoundError(
+        "Make sure to run 'process_hydro_basins.py' to generate the "
+        "the 'basins_lvl12_102022.gpkg' file."
+        )
 
-tif_index = pd.read_csv(
-    tif_index_fpath, index_col=0, parse_dates=True, dtype={'file': str}
+year_start = 2024
+year_end = 2025
+
+precip_means_africa_basins = extract_basin_zonal_timeseries(
+    mosaic_index_path=mosaic_index_path,
+    mosaic_dir=PRECIP_DIR,
+    basins_path=basins_path,
+    year_start=year_start,
+    year_end=year_end,
+    scale_factor=1,
+    basin_id_column='HYBAS_ID'
     )
 
-tif_fnames = tif_index.file
-tif_fnames = tif_fnames[~pd.isnull(tif_fnames)]
-tif_fnames = np.unique(tif_fnames)
-
-zonal_index_map, small_basin_ids = build_zonal_index_map(
-    DEST_DIR / tif_fnames[0], basins_gdf
-    )
+fname = f'precip_means_africa_basins_{year_start}-{year_end}.h5'
+precip_means_africa_basins.to_hdf(PRECIP_DIR / fname, key='precip', mode='w')
 
 # %%
 
-# Extract precip means for each basin.
+# Calculate the daily mean precipitation for the basins where water level
+# observations are available for 2000–2025.
+basins_path = datadir / 'wtd' / 'wtd_basin_geometry.gpkg'
+if not basins_path.exists():
+    raise FileNotFoundError(
+        "Make sure to run 'process_wtd_observations.py' to generate the "
+        "the 'wtd_basin_geometry.gpkg' file."
+        )
 
-ntot = len(tif_index)
-for index, row in tif_index.iterrows():
-    if pd.isnull(row.file):
-        continue
+year_start = 2000
+year_end = 2025
 
-    tif_path = DEST_DIR / row.file
+precip_means_wtd_basins = extract_basin_zonal_timeseries(
+    mosaic_index_path=mosaic_index_path,
+    mosaic_dir=PRECIP_DIR,
+    basins_path=basins_path,
+    year_start=year_start,
+    year_end=year_end,
+    scale_factor=1,
+    basin_id_column='HYBAS_ID'
+    )
 
-    print(f"[{str(index)[:10]}] Extracting basin mean precip...")
-
-    mean_precip, basin_ids = extract_zonal_means(tif_path, zonal_index_map)
-
-    for i, basin_id in enumerate(basins_gdf.index):
-        tif_index.loc[index, str(basin_id)] = mean_precip[i]
-
-tif_index.to_csv(tif_index_fpath)
+fname = f'precip_means_wtd_basins_{year_start}-{year_end}.h5'
+precip_means_wtd_basins.to_hdf(PRECIP_DIR / fname, key='precip', mode='w')
