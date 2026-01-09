@@ -48,10 +48,14 @@ Coverage: 2000–present (Terra launch:  late 1999).
 
 Outputs
 -------
-- 'ndvi_tiles_index.csv': Index mapping dates to individual MODIS tile GeoTIFFs
-- 'ndvi_mosaic_index.csv': Index mapping daily dates to reprojected mosaics
-- 'ndvi_means_wtd_basins.h5': Basin-averaged NDVI for training (2000–2025)
-- 'ndvi_means_africa_basins.h5': Basin-averaged NDVI for prediction (2024–2025)
+- 'ndvi_tiles_index.csv':
+      Index mapping dates to individual MODIS tile GeoTIFFs
+- 'ndvi_mosaic_index.csv':
+      Index mapping daily dates to reprojected mosaics
+- 'ndvi_means_wtd_basins.h5':
+      Basin-averaged NDVI for training (2000–2025)
+- 'ndvi_means_africa_basins.h5':
+      Basin-averaged NDVI for prediction (2024–2025)
 """
 
 # ---- Standard imports
