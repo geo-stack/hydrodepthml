@@ -3,3 +3,5 @@ data/coastline/africa_landmass.gpkg filter=lfs diff=lfs merge=lfs -text
 data/coastline/africa_landmass_simple.gpkg filter=lfs diff=lfs merge=lfs -text
 data/ndvi/ndvi_means_africa_basins_2024-2025.h5 filter=lfs diff=lfs merge=lfs -text
 data/ndvi/ndvi_means_wtd_basins_2000-2025.h5 filter=lfs diff=lfs merge=lfs -text
+data/wtd/wtd_basin_geometry.gpkg filter=lfs diff=lfs merge=lfs -text
+data/wtd/wtd_obs_all.gpkg filter=lfs diff=lfs merge=lfs -text
