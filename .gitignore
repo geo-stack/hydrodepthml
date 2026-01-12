@@ -3,8 +3,10 @@ notebooks/*.py
 data/chirps/*
 data/dem/*
 data/results/*
-data/pixels/*
-data/noaa_ndvi/*
+data/climate_zones/*
+data/ndvi/*
+data/precip/*
+data/topo/*
 data/*
 asiz/*
 references/
