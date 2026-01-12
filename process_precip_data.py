@@ -85,7 +85,7 @@ from hdml.zonal_extract import extract_basin_zonal_timeseries
 PRECIP_DIR = datadir / 'precip'
 PRECIP_DIR.mkdir(parents=True, exist_ok=True)
 
-basins_gdf = gpd.read_file(datadir / "data" / "wtd_basin_geometry.gpkg")
+basins_gdf = gpd.read_file(datadir / "wtd" / "wtd_basin_geometry.gpkg")
 basins_gdf = basins_gdf.set_index("HYBAS_ID", drop=True)
 basins_gdf.index = basins_gdf.index.astype(int)
 
@@ -146,7 +146,7 @@ for year, files in chirp_files.items():
         mosaic_index.loc[dtime, 'file'] = f'{year}/{file}'
 
         # Skip if already downloaded.
-        if mosaic_index.exists():
+        if tif_fpath.exists():
             print(f"[{str(dtime)[:10]}] Precip data already "
                   f"downloaded and processed....")
             continue
