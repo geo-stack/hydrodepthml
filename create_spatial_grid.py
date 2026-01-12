@@ -27,7 +27,7 @@ tiles_gdf_all = generate_tiles_bbox(
     overlap=100 * 30,  # 100 pixels at 30 meters resolution
     )
 tiles_gdf_all.to_file(
-    outdir / "tiles_geom_all.gpkg",
+    outdir / "tiles_topo_africa_bbox.gpkg",
     driver="GPKG"
     )
 
@@ -37,7 +37,7 @@ tiles_gdf_africa = filter_tiles(
     tiles_gdf_all
     )
 tiles_gdf_africa.to_file(
-    outdir / "tiles_geom_africa.gpkg",
+    outdir / "tiles_topo_africa_geom.gpkg",
     driver="GPKG"
     )
 
@@ -47,6 +47,6 @@ tiles_gdf = filter_tiles(
     tiles_gdf_all
     )
 tiles_gdf.to_file(
-    outdir / "tiles_geom_training.gpkg",
+    outdir / "tiles_topo_wtd_obs.gpkg",
     driver="GPKG"
     )
