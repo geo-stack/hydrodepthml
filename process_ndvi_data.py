@@ -329,12 +329,6 @@ mosaic_index.to_csv(mosaic_index_path)
 # Calculate the daily mean NDVI for all the basins of the African continent
 # for the 2024 and 2025 years.
 basins_path = datadir / 'basins' / 'basins_lvl12_102022.gpkg'
-if not basins_path.exists():
-    raise FileNotFoundError(
-        "Make sure to run 'process_hydro_basins.py' to generate the "
-        "the 'basins_lvl12_102022.gpkg' file."
-        )
-
 year_start, year_end = predict_year_range
 ndvi_means_africa_basins = extract_basin_zonal_timeseries(
     mosaic_index_path=mosaic_index_path,
@@ -355,12 +349,6 @@ ndvi_means_africa_basins.to_hdf(NDVI_DIR / fname, key='ndvi', mode='w')
 # Calculate the daily mean NDVI for the basins where water level observations
 # are available for 2000–2025.
 basins_path = datadir / 'wtd' / 'wtd_basin_geometry.gpkg'
-if not basins_path.exists():
-    raise FileNotFoundError(
-        "Make sure to run 'process_wtd_observations.py' to generate the "
-        "the 'wtd_basin_geometry.gpkg' file."
-        )
-
 year_start, year_end = training_year_range
 ndvi_means_wtd_basins = extract_basin_zonal_timeseries(
     mosaic_index_path=mosaic_index_path,
