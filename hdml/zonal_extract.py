@@ -389,12 +389,14 @@ def burn_hybas_on_dem(
         output_path: Path
         ):
     """
-    Rasterize basin polygons onto a DEM grid, burning HYBAS_ID values.
+    Rasterize basin polygons onto a DEM grid, burning basin ID values
+    from the index.
 
-    Creates a raster where each pixel contains the HYBAS_ID of the basin
-    it falls within. The output raster matches the spatial properties
-    (resolution, extent, CRS) of the input DEM exactly, ensuring perfect
-    alignment for subsequent zonal statistics or masking operations.
+    Creates a raster where each pixel contains the basin ID of the basin
+    it falls within. Basin IDs are taken from the GeoDataFrame's index.
+    The output raster matches the spatial properties (resolution, extent, CRS)
+    of the input DEM exactly, ensuring perfect alignment for subsequent zonal
+    statistics or masking operations.
 
     Parameters
     ----------
@@ -403,9 +405,9 @@ def burn_hybas_on_dem(
         (resolution, extent, transform, CRS). Can be a VRT or any
         rasterio-readable format.
     basins_gdf : gpd.GeoDataFrame
-        GeoDataFrame containing basin polygons.  Must have a 'HYBAS_ID'
-        column with integer basin identifiers.  Will be reprojected
-        automatically if CRS doesn't match the DEM.
+        GeoDataFrame containing basin polygons, indexed by basin ID
+        (e.g., HYBAS_ID). The index values will be burned into the raster.
+        Will be reprojected automatically if CRS doesn't match the DEM.
     output_path : Path
         Path where the output raster will be written. Parent directory
         must exist.
@@ -428,7 +430,7 @@ def burn_hybas_on_dem(
             basins_gdf = basins_gdf.to_crs(crs)
 
         # Create (geometry, value) pairs for rasterization.
-        shapes = list(zip(basins_gdf. geometry, basins_gdf['HYBAS_ID']))
+        shapes = list(zip(basins_gdf.geometry, basins_gdf.index))
 
         # Rasterize.
         basin_raster = rasterize(
@@ -437,13 +439,13 @@ def burn_hybas_on_dem(
             transform=transform,
             fill=0,  # NoData value (pixels outside any basin)
             all_touched=False,  # Only pixels whose center is in polygon
-            dtype='int32'
+            dtype='int64'
             )
 
         # Write to file
         output_meta = dem.meta.copy()
         output_meta.update({
-            'dtype': 'int32',
+            'dtype': 'int64',
             'nodata': 0,
             'compress': 'deflate'
             })
