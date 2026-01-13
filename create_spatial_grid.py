@@ -20,6 +20,9 @@ path_vrt_reprojected = datadir / 'dem' / 'nasadem_102022.vrt'
 path_africa_geom = datadir / 'coastline' / 'africa_landmass_simple.gpkg'
 path_wtd_obs = datadir / 'wtd' / 'wtd_obs_all.gpkg'
 
+outdir = datadir / "features"
+outdir.mkdir(parents=True, exist_ok=True)
+
 # Tiles for the whole African continent bbox.
 tiles_gdf_all = generate_tiles_bbox(
     input_raster=path_vrt_reprojected,
@@ -27,7 +30,7 @@ tiles_gdf_all = generate_tiles_bbox(
     overlap=100 * 30,  # 100 pixels at 30 meters resolution
     )
 tiles_gdf_all.to_file(
-    datadir / "tiles_africa_bbox.gpkg",
+    outdir / "tiles_africa_bbox.gpkg",
     driver="GPKG"
     )
 
@@ -37,7 +40,7 @@ tiles_gdf_africa = filter_tiles(
     tiles_gdf_all
     )
 tiles_gdf_africa.to_file(
-    datadir / "tiles_africa_geom.gpkg",
+    outdir / "tiles_africa_geom.gpkg",
     driver="GPKG"
     )
 
@@ -47,6 +50,6 @@ tiles_gdf = filter_tiles(
     tiles_gdf_all
     )
 tiles_gdf.to_file(
-    datadir / "tiles_wtd_obs.gpkg",
+    outdir / "tiles_wtd_obs.gpkg",
     driver="GPKG"
     )
