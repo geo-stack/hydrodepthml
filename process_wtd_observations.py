@@ -55,7 +55,7 @@ gwl_gdf['HYBAS_ID'] = gwl_gdf['HYBAS_ID'].astype(int)
 # to compute the 'ndvi' and 'precipitation' features.
 for index, row in gwl_gdf.iterrows():
     ndays = recharge_period_from_basin_area(row.basin_area_km2)
-    date_start = row.DATE - pd.Timedelta(days=60)
+    date_start = row.DATE - pd.Timedelta(days=ndays)
     gwl_gdf.loc[index, 'climdata_period_days'] = ndays
     gwl_gdf.loc[index, 'climdata_date_start'] = date_start
 
