@@ -34,6 +34,41 @@ COUNTRIES = ['Benin', 'Burkina', 'Guinee', 'Mali', 'Niger', 'Togo', 'Chad']
 TARGET_CRS = "ESRI:102022"  # Africa Albers Equal Area Conic
 
 
+def recharge_period_from_basin_area(area_km2: float) -> int:
+    """
+    Estimates a suitable averaging period (in days) for climatic
+    variables.
+
+    This approach assumes larger basins have longer hydrological
+    response times.
+
+    Parameters
+    ----------
+    area_km2 : float
+        Surface area of the watershed or basin in square kilometers.
+
+    Returns
+    -------
+    int
+        Recommended period (in days) to average precipitation, based on
+        basin area.
+    """
+    if area_km2 < 100:
+        return 30
+    elif area_km2 < 500:
+        return 60
+    elif area_km2 < 1000:
+        return 90
+    elif area_km2 < 3000:
+        return 120
+    elif area_km2 < 5000:
+        return 150
+    elif area_km2 < 10000:
+        return 180
+
+    return 360
+
+
 def create_wtd_obs_dataset(
         datadir: Path, clip_to_geom: Path
         ) -> gpd.GeoDataFrame:

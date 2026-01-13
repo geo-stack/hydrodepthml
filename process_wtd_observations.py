@@ -18,42 +18,8 @@ import geopandas as gpd
 
 # ---- Local imports
 from hdml import __datadir__ as datadir
-from hdml.wtd_helpers import create_wtd_obs_dataset
-
-
-def recharge_period_from_basin_area(area_km2: float) -> int:
-    """
-    Estimates a suitable averaging period (in days) for climatic
-    variables.
-
-    This approach assumes larger basins have longer hydrological
-    response times.
-
-    Parameters
-    ----------
-    area_km2 : float
-        Surface area of the watershed or basin in square kilometers.
-
-    Returns
-    -------
-    int
-        Recommended period (in days) to average precipitation, based on
-        basin area.
-    """
-    if area_km2 < 100:
-        return 30
-    elif area_km2 < 500:
-        return 60
-    elif area_km2 < 1000:
-        return 90
-    elif area_km2 < 3000:
-        return 120
-    elif area_km2 < 5000:
-        return 150
-    elif area_km2 < 10000:
-        return 180
-
-    return 360
+from hdml.wtd_helpers import (
+    create_wtd_obs_dataset, recharge_period_from_basin_area)
 
 
 gwl_gdf = create_wtd_obs_dataset(
