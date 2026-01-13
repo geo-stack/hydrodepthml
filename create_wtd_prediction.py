@@ -12,6 +12,7 @@
 # ---- Standard imports
 import ast
 from datetime import datetime
+import pickle
 
 # ---- Third party imports
 import numpy as np
@@ -283,3 +284,71 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
     print(f'{progress} Saving predict dataframe to disk...')
     h5_path = PREDICT_PATH / f"predict_dset_tile_{ty:03d}_{tx:03d}.h5"
     df.to_hdf(h5_path, key='data', mode='w')
+
+
+# %%
+
+df = pd.read_hdf(
+    "D:/Projets/hydrodepthml/data/predict/predict_dset_tile_020_004.h5",
+    key='data'
+    )
+
+varlist = [
+    'ratio_dist',
+    'ratio_stream',
+    'dist_stream',
+    'alt_stream',
+    'dist_top',
+    'alt_top',
+    'long_hessian_max',
+    'long_hessian_mean',
+    'long_hessian_var',
+    'long_hessian_skew',
+    'long_hessian_kurt',
+    'long_grad_mean',
+    'long_grad_var',
+    'short_grad_max',
+    'short_grad_var',
+    'short_grad_mean',
+    'stream_grad_max',
+    'stream_grad_var',
+    'stream_grad_mean',
+    'stream_hessian_max',
+    'ndvi',
+    'precipitation',
+    ]
+
+X = df.loc[:, varlist].values
+
+model_path = datadir / 'model' / 'wtd_predict_model.pkl'
+with open(model_path, 'rb') as f:
+    loaded_model = pickle. load(f)
+
+wtd_predicted = loaded_model.predict(X)
+
+import rasterio
+import numpy as np
+
+dem_path = tiles_cropped_dir / "dem_cond" / "dem_cond_tile_020_004.tif"
+
+output_path = datadir / 'predict' / 'pred_wtd_tile_020_004.tif'
+
+with rasterio.open(dem_path) as dem:
+    # Reshape 1D predictions to 2D grid
+    height, width = dem.height, dem.width
+
+    wtd_2d = wtd_predicted.reshape(height, width)
+
+    # Copy metadata from DEM.
+    output_meta = dem.meta.copy()
+
+    # Update metadata for predictions.
+    output_meta.update({
+        'dtype': 'float32',
+        'nodata': -9999,
+        'compress': 'deflate'
+        })
+
+    # Write to file
+    with rasterio.open(output_path, 'w', **output_meta) as dst:
+        dst.write(wtd_2d. astype('float32'), 1)
