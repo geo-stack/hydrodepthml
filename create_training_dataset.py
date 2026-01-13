@@ -31,22 +31,22 @@ if not nasadem_mosaic_path.exists():
 
 gwl_gdf = gpd.read_file(datadir / "wtd" / "wtd_obs_all.gpkg")
 
-tiles_gdf = gpd.read_file(datadir / "topo" / "tiles_topo_wtd_obs.gpkg")
+tiles_gdf = gpd.read_file(datadir / "features" / "tiles_wtd_obs.gpkg")
 
 with rasterio.open(nasadem_mosaic_path) as src:
     # The horizontal and vertical resolution should be the same.
     pixel_size = src.res[0]
 
+tiles_overlap_dir = datadir / 'features' / 'tiles (overlapped)'
+tiles_overlap_dir.mkdir(parents=True, exist_ok=True)
+
+tiles_cropped_dir = datadir / 'features' / 'tiles (cropped)'
+tiles_cropped_dir.mkdir(parents=True, exist_ok=True)
+
 # %%
 
 # Generate the topo-derived features for all tiles containing at least
 # one valid WTD observation.
-
-tiles_overlap_dir = datadir / 'topo' / 'tiles (cropped)'
-tiles_overlap_dir.mkdir(parents=True, exist_ok=True)
-
-tiles_cropped_dir = datadir / 'topo' / 'tiles (overlapped)'
-tiles_cropped_dir.mkdir(parents=True, exist_ok=True)
 
 tile_count = 0
 total_tiles = len(tiles_gdf)
@@ -84,8 +84,6 @@ joined = gpd.sjoin(
     )
 joined = joined.drop(columns=['index_right'])
 
-input_dir = datadir / 'topo' / 'tiles (cropped)'
-
 ntot = len(np.unique(joined.tile_index))
 count = 1
 for tile_idx, group in joined.groupby('tile_index'):
@@ -96,9 +94,8 @@ for tile_idx, group in joined.groupby('tile_index'):
 
     name = 'dem_cond'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
-    tif_path = input_dir / name / tile_name
+    tif_path = tiles_cropped_dir / name / tile_name
     with rasterio.open(tif_path) as src:
-        pixel_size = src.res
         values = np.array(list(src.sample(coords)))
         values[values == src.nodata] = np.nan
 
@@ -106,7 +103,7 @@ for tile_idx, group in joined.groupby('tile_index'):
 
     name = 'nearest_stream_coords'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
-    tif_path = input_dir / name / tile_name
+    tif_path = tiles_cropped_dir / name / tile_name
     with rasterio.open(tif_path) as src:
         values = np.array(list(src.sample(coords)))
         values[values == src.nodata] = np.nan
@@ -117,7 +114,7 @@ for tile_idx, group in joined.groupby('tile_index'):
 
     name = 'nearest_ridge_coords'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
-    tif_path = input_dir / name / tile_name
+    tif_path = tiles_cropped_dir / name / tile_name
     with rasterio.open(tif_path) as src:
         values = np.array(list(src.sample(coords)))
         values[values == src.nodata] = np.nan
@@ -145,7 +142,7 @@ for tile_idx, group in joined.groupby('tile_index'):
 
     for name, bands in name_bands.items():
         tile_name = f'{name}_stats_tile_{ty:03d}_{tx:03d}.tif'
-        tif_path = input_dir / f'{name}_stats' / tile_name
+        tif_path = tiles_cropped_dir / f'{name}_stats' / tile_name
 
         with rasterio.open(tif_path) as src:
             values = np.array(list(src.sample(coords)))
@@ -161,6 +158,8 @@ for tile_idx, group in joined.groupby('tile_index'):
 # %%
 
 # Calculate distances and ratios.
+
+print('Calculate distances and ratios...')
 
 gwl_gdf['dist_stream'] = (
     (gwl_gdf.point_x - gwl_gdf.stream_x)**2 +
@@ -190,10 +189,13 @@ gwl_gdf.to_csv(datadir / "wtd_obs_training_dataset.csv")
 
 # %%
 
+model_dir = datadir / 'model'
+model_dir.mkdir(parents=True, exist_ok=True)
+
+
 # Add precip and ndvi avg sub-basin values for each water level observation.
 
 print("Adding NDVI and precipitation data to training dataset...")
-
 
 ndvi_means_wtd_basins = pd.read_hdf(
     datadir / 'ndvi' / 'ndvi_means_wtd_basins_2000-2025.h5',
@@ -207,7 +209,7 @@ precip_means_wtd_basins = pd.read_hdf(
 
 for index, row in gwl_gdf.iterrows():
     date_range = pd.date_range(row.climdata_date_start, row.DATE)
-    basin_id = str(int(row.HYBAS_ID))
+    basin_id = int(row.HYBAS_ID)
 
     # Add mean daily NDVI values (at the basin scale).
     ndvi_values = ndvi_means_wtd_basins.loc[date_range, basin_id]
@@ -217,4 +219,4 @@ for index, row in gwl_gdf.iterrows():
     precip_values = precip_means_wtd_basins.loc[date_range, basin_id]
     gwl_gdf.loc[index, 'precipitation'] = np.mean(precip_values)
 
-gwl_gdf.to_csv(datadir / "wtd_obs_training_dataset.csv")
+gwl_gdf.to_csv(model_dir / "wtd_obs_training_dataset.csv")
