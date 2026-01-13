@@ -10,6 +10,7 @@
 # =============================================================================
 
 # ---- Standard imports
+import ast
 
 # ---- Third party imports
 import numpy as np
@@ -19,28 +20,69 @@ import geopandas as gpd
 
 # ---- Local imports
 from hdml import __datadir__ as datadir
+from hdml.topo import generate_topo_features_for_tile
 
+nasadem_mosaic_path = datadir / 'dem' / 'nasadem_102022.vrt'
+if not nasadem_mosaic_path.exists():
+    raise FileNotFoundError(
+        "Make sure to run 'process_dem_data.py' before running this "
+        "script to download and process DEM data."
+        )
 
-gwl_gdf = gpd.read_file(datadir / "data" / "wtd_obs_all.gpkg")
+gwl_gdf = gpd.read_file(datadir / "wtd" / "wtd_obs_all.gpkg")
 
-basins_gdf = gpd.read_file(datadir / "data" / "wtd_basin_geometry.gpkg")
-basins_gdf = basins_gdf.set_index("HYBAS_ID", drop=True)
+tiles_gdf = gpd.read_file(datadir / "topo" / "tiles_topo_wtd_obs.gpkg")
 
-# Extract coordinates of WTD obs as list of (x, y) tuples.
-coords = [(geom.x, geom.y) for geom in gwl_gdf.geometry]
+with rasterio.open(nasadem_mosaic_path) as src:
+    # The horizontal and vertical resolution should be the same.
+    pixel_size = src.res[0]
 
-tiles_gdf = gpd.read_file(datadir / "topo" / "tiles_geom_training.gpkg")
+# %%
+
+# Generate the topo-derived features for all tiles containing at least
+# one valid WTD observation.
+
+tiles_overlap_dir = datadir / 'topo' / 'tiles (cropped)'
+tiles_overlap_dir.mkdir(parents=True, exist_ok=True)
+
+tiles_cropped_dir = datadir / 'topo' / 'tiles (overlapped)'
+tiles_cropped_dir.mkdir(parents=True, exist_ok=True)
+
+tile_count = 0
+total_tiles = len(tiles_gdf)
+for _, tile_bbox_data in tiles_gdf.iterrows():
+    tile_count += 1
+
+    if total_tiles >= 100:
+        progress = f"[{tile_count:03d}/{total_tiles}]"
+    elif total_tiles >= 10:
+        progress = f"[{tile_count:02d}/{total_tiles}]"
+    else:
+        progress = f"[{tile_count}/{total_tiles}]"
+
+    generate_topo_features_for_tile(
+        tile_bbox_data=tile_bbox_data,
+        dem_path=nasadem_mosaic_path,
+        crop_tile_dir=tiles_cropped_dir,
+        ovlp_tile_dir=tiles_overlap_dir,
+        print_affix=progress,
+        extract_streams_treshold=500,
+        gaussian_filter_sigma=1,
+        ridge_size=30,
+        )
+
+# %%
+
+# Extract top-derived features from the pre-processed tiles.
+
+gwl_gdf['point_x'] = gwl_gdf.geometry.x
+gwl_gdf['point_y'] = gwl_gdf.geometry.y
 
 joined = gpd.sjoin(
     gwl_gdf, tiles_gdf[['tile_index', 'geometry']],
     how='left', predicate='within'
     )
 joined = joined.drop(columns=['index_right'])
-
-# %%
-
-gwl_gdf['point_x'] = gwl_gdf.geometry.x
-gwl_gdf['point_y'] = gwl_gdf.geometry.y
 
 input_dir = datadir / 'topo' / 'tiles (cropped)'
 
@@ -50,14 +92,13 @@ for tile_idx, group in joined.groupby('tile_index'):
     print(f"[{count}/{ntot}] Processing tile index: {tile_idx}...")
 
     coords = [(geom.x, geom.y) for geom in group.geometry]
-
-    import ast
     ty, tx = ast.literal_eval(tile_idx)
 
     name = 'dem_cond'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
     tif_path = input_dir / name / tile_name
     with rasterio.open(tif_path) as src:
+        pixel_size = src.res
         values = np.array(list(src.sample(coords)))
         values[values == src.nodata] = np.nan
 
@@ -118,7 +159,8 @@ for tile_idx, group in joined.groupby('tile_index'):
 
 
 # %%
-pixel_size = 30
+
+# Calculate distances and ratios.
 
 gwl_gdf['dist_stream'] = (
     (gwl_gdf.point_x - gwl_gdf.stream_x)**2 +
@@ -152,14 +194,15 @@ gwl_gdf.to_csv(datadir / "wtd_obs_training_dataset.csv")
 
 print("Adding NDVI and precipitation data to training dataset...")
 
-ndvi_daily = pd.read_csv(
-    datadir / 'ndvi' / 'ndvi_mosaic_index.csv',
-    index_col=0, parse_dates=True, dtype={'file': str}
+
+ndvi_means_wtd_basins = pd.read_hdf(
+    datadir / 'ndvi' / 'ndvi_means_wtd_basins_2000-2025.h5',
+    key='ndvi'
     )
 
-precip_daily = pd.read_csv(
-    datadir / 'precip' / 'precip_tif_index.csv',
-    index_col=0, parse_dates=True, dtype={'file': str}
+precip_means_wtd_basins = pd.read_hdf(
+    datadir / 'precip' / 'precip_means_wtd_basins_2000-2025.h5',
+    key='precip'
     )
 
 for index, row in gwl_gdf.iterrows():
@@ -167,12 +210,11 @@ for index, row in gwl_gdf.iterrows():
     basin_id = str(int(row.HYBAS_ID))
 
     # Add mean daily NDVI values (at the basin scale).
-    ndvi_values = ndvi_daily.loc[date_range, basin_id]
+    ndvi_values = ndvi_means_wtd_basins.loc[date_range, basin_id]
     gwl_gdf.loc[index, 'ndvi'] = np.mean(ndvi_values)
 
     # Add mean daily PRECIP values (at the basin scale).
-    precip_values = precip_daily.loc[date_range, basin_id]
+    precip_values = precip_means_wtd_basins.loc[date_range, basin_id]
     gwl_gdf.loc[index, 'precipitation'] = np.mean(precip_values)
 
-gwl_gdf.to_file(datadir / "wtd_obs_training_dataset.gpkg", driver="GPKG")
 gwl_gdf.to_csv(datadir / "wtd_obs_training_dataset.csv")
