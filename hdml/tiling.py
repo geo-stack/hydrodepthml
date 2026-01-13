@@ -23,7 +23,6 @@ import itertools
 import geopandas as gpd
 from osgeo import gdal
 import rasterio
-from rasterio.windows import from_bounds
 from shapely.geometry import box
 
 # ---- Local imports
@@ -369,10 +368,3 @@ def mosaic_tiles(
             tile.unlink(missing_ok=True)
 
     return output_raster
-
-
-if __name__ == '__main__':
-    from sahel import __datadir__ as datadir
-    # wtd_path = Path(datadir) / 'data' / 'wtd_obs_all.geojson'
-    # output_path = Path(datadir) / 'data' / 'wtd_obs_boundary.geojson'
-    # bbox_gdf = create_buffered_bounding_box(wtd_path, output_path)
