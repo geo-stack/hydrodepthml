@@ -215,18 +215,18 @@ def nearest_ridge_coords(dem: Path, ridges: Path, output: Path,
         nearest_rows.ravel(), nearest_cols.ravel(),
         offset='center'
         )
-    xs = np.array(xs, dtype=np.float32).reshape(nearest_rows.shape)
-    ys = np.array(ys, dtype=np.float32).reshape(nearest_rows.shape)
+
+    xs = np.array(xs, dtype=np.float32).reshape(dem_data.shape)
+    xs[nodata_mask] = dem_nodata
+
+    ys = np.array(ys, dtype=np.float32).reshape(dem_data.shape)
+    ys[nodata_mask] = dem_nodata
 
     # z (elevation) value at the location of the nearest ridge pixel.
-    z_ridge = dem_data[nearest_rows, nearest_cols].astype(np.float32)
-
-    # Apply nodata mask to all output bands
-    nearest_rows[nodata_mask] = dem_nodata
-    nearest_cols[nodata_mask] = dem_nodata
-    xs[nodata_mask] = dem_nodata
-    ys[nodata_mask] = dem_nodata
-    z_ridge[nodata_mask] = dem_nodata
+    z_ridge = np.full(dem_data.shape, dem_nodata, dtype=np.float32)
+    z_ridge[~nodata_mask] = dem_data[
+        nearest_rows[~nodata_mask], nearest_cols[~nodata_mask]
+        ]
 
     # Write output raster with 5 bands (all float32):
     out_profile = dem_profile.copy()
@@ -295,6 +295,7 @@ def _dist_to_ridges_topological(
 
     dem_height, dem_width = dem_data.shape
     spiral_offsets = precompute_spiral_offsets(max(dem_width, dem_height))
+
     ridge_dist = np.full((3, *dem_data.shape), nodata, dtype=np.float32)
 
     n_rows, n_cols = dem_data.shape
