@@ -812,5 +812,5 @@ def generate_topo_features_for_tile(
         t1 = perf_counter()
         print(f' done in {round(t1 - t0):0.0f} sec')
     ttot1 = perf_counter()
-    print(f"{print_affix} All topo feature for tile {tile_index} "
+    print(f"{print_affix}All topo feature for tile {tile_index} "
           f"computed in {round(ttot1 - ttot0):0.0f} sec")
