@@ -12,7 +12,6 @@
 # ---- Standard imports
 import ast
 from datetime import datetime
-from pathlib import Path
 
 # ---- Third party imports
 import numpy as np
@@ -29,6 +28,10 @@ from hdml.topo import generate_topo_features_for_tile
 from hdml.wtd_helpers import recharge_period_from_basin_area
 from hdml.gishelpers import raster_to_dataframe, raster_to_flat_array
 
+# The reference date from which NDVI and precipitation averages are
+# calculated.
+REF_DATE = datetime(2025, 7, 31)
+
 # Define here the lat/lon of the area for which you want to
 # predict the water level.
 
@@ -41,8 +44,6 @@ LON_MAX = -12.072458460416062
 # The dir where results will be saved.
 PREDICT_PATH = datadir / 'predict'
 PREDICT_PATH.mkdir(parents=True, exist_ok=True)
-
-REF_DATE = datetime(2025, 7, 31)
 
 
 # %%
