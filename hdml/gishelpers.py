@@ -19,12 +19,12 @@ import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ---- Third party imports
-import shapely
 import numpy as np
 import geopandas as gpd
+import pandas as pd
 import rasterio
 from rasterio.features import rasterize
-from rasterio.mask import mask
+from rasterio.io import DatasetReader
 from osgeo import gdal
 
 gdal.UseExceptions()
@@ -377,3 +377,100 @@ def clip_and_project_raster(
         )
 
     gdal.Warp(output_raster, input_raster, options=warp_options)
+
+
+def raster_to_flat_array(
+        raster: Path | DatasetReader,
+        band:  int = 1,
+        nodata_to_nan: bool = True
+        ) -> np.ndarray:
+    """
+    Extract raster band as a flattened 1D array.
+
+    Parameters
+    ----------
+    raster : Path or DatasetReader
+        Path to raster file or open rasterio DatasetReader
+    band : int, optional
+        Band number to extract (default: 1)
+    nodata_to_nan : bool, optional
+        Whether to convert nodata values to NaN (default: True)
+
+    Returns
+    -------
+    np.ndarray
+        Flattened 1D array of pixel values (float32 if nodata_to_nan=True)
+    """
+
+    if isinstance(raster, Path):
+        with rasterio.open(raster) as src:
+            data = src.read(band)
+            nodata = src.nodata
+    else:
+        data = raster.read(band)
+        nodata = raster.nodata
+
+    # Flatten the data
+    values = data.flatten()
+
+    # Convert nodata to NaN if requested.
+    if nodata_to_nan and nodata is not None:
+        # Convert to float to support NaN.
+        values = values.astype('float32')
+        values[values == nodata] = np.nan
+
+    return values
+
+
+def raster_to_dataframe(
+        raster_path: Path,
+        band: int = 1,
+        nodata_to_nan: bool = True
+        ) -> pd.DataFrame:
+    """
+    Convert a raster to a DataFrame with pixel coordinates and values.
+
+    Parameters
+    ----------
+    raster_path : Path or str
+        Path to raster file
+    band : int, optional
+        Band number to extract (default: 1)
+    nodata_to_nan : bool, optional
+        Whether to convert nodata values to NaN (default: True).
+        If False, nodata values are kept as-is.
+
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame with columns:  ['row', 'col', 'x', 'y', 'value']
+        where x, y are the geographic coordinates of pixel centers.
+        All pixels are included (NaN values are not filtered out).
+    """
+    with rasterio.open(raster_path) as src:
+        # Get the transform.
+        transform = src.transform
+
+        # Create coordinate arrays.
+        rows, cols = np. indices((src.height, src. width))
+        rows = rows.flatten()
+        cols = cols.flatten()
+
+        # Convert pixel coordinates to geographic coordinates.
+        xs, ys = rasterio.transform.xy(transform, rows, cols)
+
+        # Fetch values.
+        values = raster_to_flat_array(
+            src, band=band, nodata_to_nan=nodata_to_nan
+            )
+
+        # Create pandas DataFrame.
+        gdf = pd.DataFrame(
+            {'row': rows,
+             'col': cols,
+             'point_x': xs,
+             'point_y': ys,
+             'value': values}
+            )
+
+    return gdf
