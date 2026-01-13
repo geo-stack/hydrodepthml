@@ -16,9 +16,6 @@ import geopandas as gpd
 from hdml import __datadir__ as datadir
 from hdml.tiling import generate_tiles_bbox, filter_tiles
 
-outdir = datadir / "topo"
-outdir.mkdir(exist_ok=True)
-
 path_vrt_reprojected = datadir / 'dem' / 'nasadem_102022.vrt'
 path_africa_geom = datadir / 'coastline' / 'africa_landmass_simple.gpkg'
 path_wtd_obs = datadir / 'wtd' / 'wtd_obs_all.gpkg'
@@ -30,7 +27,7 @@ tiles_gdf_all = generate_tiles_bbox(
     overlap=100 * 30,  # 100 pixels at 30 meters resolution
     )
 tiles_gdf_all.to_file(
-    outdir / "tiles_topo_africa_bbox.gpkg",
+    datadir / "tiles_africa_bbox.gpkg",
     driver="GPKG"
     )
 
@@ -40,7 +37,7 @@ tiles_gdf_africa = filter_tiles(
     tiles_gdf_all
     )
 tiles_gdf_africa.to_file(
-    outdir / "tiles_topo_africa_geom.gpkg",
+    datadir / "tiles_africa_geom.gpkg",
     driver="GPKG"
     )
 
@@ -50,6 +47,6 @@ tiles_gdf = filter_tiles(
     tiles_gdf_all
     )
 tiles_gdf.to_file(
-    outdir / "tiles_topo_wtd_obs.gpkg",
+    datadir / "tiles_wtd_obs.gpkg",
     driver="GPKG"
     )
