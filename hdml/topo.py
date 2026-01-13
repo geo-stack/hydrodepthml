@@ -330,9 +330,8 @@ def _dist_to_ridges_topological(
                     # Nearest point is not a ridge.
                     continue
 
-                # If doing Euclidean search, or if current point is a stream,
-                # simply keep the closest ridge.
-                if not topological or streams_data[row, col] == 1:
+                # If current point is a stream, simply keep the closest ridge.
+                if streams_data[row, col] == 1:
                     ridge_dist[0, row, col] = sqrt(dist_sqrt) * pixel_size
                     ridge_dist[1, row, col] = row + dr
                     ridge_dist[2, row, col] = col + dc
@@ -351,7 +350,7 @@ def _dist_to_ridges_topological(
                     continue
                 else:
                     # This candidate is valid, exit spiral search.
-                    ridge_dist[0, row, col] = (dr**2 + dc**2)**0.5 * pixel_size
+                    ridge_dist[0, row, col] = sqrt(dist_sqrt) * pixel_size
                     ridge_dist[1, row, col] = row + dr
                     ridge_dist[2, row, col] = col + dc
                     break
@@ -696,7 +695,7 @@ def generate_topo_features_for_tile(
         tile_name = tile_name_template.format(name=name, ty=ty, tx=tx)
         tile_paths[name] = ovlp_tile_dir / name / tile_name
 
-        if not(crop_tile_dir / name / tile_name).exists():
+        if not (crop_tile_dir / name / tile_name).exists():
             all_processed = False
 
     if all_processed is True:
