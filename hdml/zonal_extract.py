@@ -383,8 +383,76 @@ def extract_basin_zonal_timeseries(
     return basin_timeseries
 
 
+def burn_hybas_on_dem(
+        dem_path: Path,
+        basins_gdf: gpd.GeoDataFrame,
+        output_path: Path
+        ):
+    """
+    Rasterize basin polygons onto a DEM grid, burning HYBAS_ID values.
+
+    Creates a raster where each pixel contains the HYBAS_ID of the basin
+    it falls within. The output raster matches the spatial properties
+    (resolution, extent, CRS) of the input DEM exactly, ensuring perfect
+    alignment for subsequent zonal statistics or masking operations.
+
+    Parameters
+    ----------
+    dem_path : Path
+        Path to DEM raster file used as template for grid properties
+        (resolution, extent, transform, CRS). Can be a VRT or any
+        rasterio-readable format.
+    basins_gdf : gpd.GeoDataFrame
+        GeoDataFrame containing basin polygons.  Must have a 'HYBAS_ID'
+        column with integer basin identifiers.  Will be reprojected
+        automatically if CRS doesn't match the DEM.
+    output_path : Path
+        Path where the output raster will be written. Parent directory
+        must exist.
+
+    Returns
+    -------
+    None
+        Writes output directly to file.
+    """
+
+    # Open DEM to get shape, transform, CRS.
+    with rasterio.open(dem_path) as dem:
+        # Get grid parameters from DEM
+        transform = dem.transform
+        shape = (dem.height, dem.width)
+        crs = dem.crs
+
+        # Reproject basins if needed.
+        if basins_gdf.crs != crs:
+            basins_gdf = basins_gdf.to_crs(crs)
+
+        # Create (geometry, value) pairs for rasterization.
+        shapes = list(zip(basins_gdf. geometry, basins_gdf['HYBAS_ID']))
+
+        # Rasterize.
+        basin_raster = rasterize(
+            shapes=shapes,
+            out_shape=shape,
+            transform=transform,
+            fill=0,  # NoData value (pixels outside any basin)
+            all_touched=False,  # Only pixels whose center is in polygon
+            dtype='int32'
+            )
+
+        # Write to file
+        output_meta = dem.meta.copy()
+        output_meta.update({
+            'dtype': 'int32',
+            'nodata': 0,
+            'compress': 'deflate'
+            })
+
+        with rasterio.open(output_path, 'w', **output_meta) as dst:
+            dst.write(basin_raster, 1)
+
+
 if __name__ == '__main__':
-    import rasterio
     import numpy as np
     import pandas as pd
     from pathlib import Path
