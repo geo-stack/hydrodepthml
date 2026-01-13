@@ -9,6 +9,9 @@
 # Repository: https://github.com/geo-stack/hydrodepthml
 # =============================================================================
 
+# ---- Third party imports
+import geopandas as gpd
+
 # ---- Local imports
 from hdml import __datadir__ as datadir
 from hdml.tiling import generate_tiles_bbox, filter_tiles
@@ -33,7 +36,7 @@ tiles_gdf_all.to_file(
 
 # Tiles clipped to the African continent geometry.
 tiles_gdf_africa = filter_tiles(
-    path_africa_geom,
+    gpd.read_file(path_africa_geom),
     tiles_gdf_all
     )
 tiles_gdf_africa.to_file(
@@ -43,7 +46,7 @@ tiles_gdf_africa.to_file(
 
 # Tiles that contains water level observations.
 tiles_gdf = filter_tiles(
-    path_wtd_obs,
+    gpd.read_file(path_wtd_obs),
     tiles_gdf_all
     )
 tiles_gdf.to_file(
