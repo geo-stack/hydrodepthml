@@ -30,12 +30,25 @@ Two datasets are produced:
 - Prediction dataset ('precip_means_africa_basins_2024-2025.h5'):
       Daily precipitation averages for all African basins, covering 2024–2025
 
+Note: This script is OPTIONAL. The output .h5 files are already distributed
+in the GitHub repository as Git Large File Storage (LFS) files and do not need
+to be regenerated unless you want to add more water level observations for
+model training or update/change the reference date (2025-07-31) for water table
+depth prediction.
+
 
 Requirements
 ------------
 - HydroATLAS level 12 basins must be available (see 'process_hydro_basins.py')
 - Africa landmass geometry for bounding box extraction
   (see 'process_usgs_coastal.py')
+
+
+Storage Requirements
+--------------------
+- CHIRPS GeoTIFF files (Africa, 2000–2025): ~32.6 GB
+- Compiled precipitation means (HDF5): ~682 MB (620 MB + 62 MB)
+- Total storage: ~33.3 GB
 
 
 Data Source
