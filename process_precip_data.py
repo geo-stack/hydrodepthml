@@ -30,11 +30,13 @@ Two datasets are produced:
 - Prediction dataset ('precip_means_africa_basins_2024-2025.h5'):
       Daily precipitation averages for all African basins, covering 2024–2025
 
+
 Requirements
 ------------
 - HydroATLAS level 12 basins must be available (see 'process_hydro_basins.py')
 - Africa landmass geometry for bounding box extraction
   (see 'process_usgs_coastal.py')
+
 
 Data Source
 -----------
@@ -45,6 +47,7 @@ Documentation: https://www.chc.ucsb.edu/data/chirps
 Data combines satellite imagery with in-situ station data for improved
 accuracy data-scarce regions.
 
+
 Outputs
 -------
 - 'precip_mosaic_index.csv':
@@ -53,6 +56,7 @@ Outputs
       Basin-averaged precipitation for training
 - 'precip_means_africa_basins_2024-2025.h5':
       Basin-averaged precipitation for prediction
+
 
 Notes
 -----
