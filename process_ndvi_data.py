@@ -29,6 +29,14 @@ Two datasets are produced:
     Daily NDVI averages for basins containing water table observations,
     covering 2000–2025.
 
+Note: This script is OPTIONAL. The output .h5 files are already distributed
+in the GitHub repository as Git Large File Storage (LFS) files and do not need
+to be regenerated unless you want to add more water level observations for
+model training or update/change the reference date (2025-07-31) for water table
+depth prediction. If adding new observation sites, you must also update the
+MODIS_TILE_NAMES variable to include the corresponding tiles and year ranges
+(see inline comments and https://modis-land.gsfc.nasa.gov/MODLAND_grid.html).
+
 
 Requirements
 ------------
@@ -39,8 +47,18 @@ Requirements
 
 To use this script, you must have a valid NASA Earthdata account. You will be
 prompted to provide your Earthdata username and password for authentication.
-You can create an account for free at: https://urs.earthdata.nasa.gov/
 
+
+Storage Requirements
+--------------------
+- MODIS MOD13Q1 HDF files (250m): ~1.09 TB
+- Extracted NDVI TIF files (250m): ~148 GB
+- NDVI mosaic TIF files (250m): ~154 GB
+- Compiled NDVI means (HDF5): ~709 MB (647 MB + 62 MB)
+- Total peak storage: ~1.39 TB
+
+Note: MODIS HDF and extracted TIF files can be deleted or archived after
+mosaics are produced to recover ~1.24 TB of disk space.
 
 Data Source
 -----------
