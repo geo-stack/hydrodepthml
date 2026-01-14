@@ -70,11 +70,13 @@ def recharge_period_from_basin_area(area_km2: float) -> int:
 
 
 def create_wtd_obs_dataset(
-        datadir: Path, clip_to_geom: Path
+        input_files: dict,
+        bad_obs_file: Path,
+        clip_to_geom: Path
         ) -> gpd.GeoDataFrame:
     """
     Load, assemble, and filter water table depth (WTD) observation datasets
-    rom multiple countries.
+    from multiple countries.
 
     This function reads WTD observations stored as Excel files (one per
     country), combines them into a single GeoDataFrame, reprojects to a
@@ -83,16 +85,20 @@ def create_wtd_obs_dataset(
 
     Parameters
     ----------
-    datadir : Path
-        Path to the directory containing country-level Excel files
-        (e.g., 'Benin.xlsx', 'Mali.xlsx'). The directory should also contain
-        a file named 'bad_obs_data.xlsx' with columns 'COUNTRY' and 'ID'
-        identifying observations to exclude.
+    input_files : dict
+        Dictionary mapping country names (str) to file paths (Path).
+        Each file should be an Excel file containing WTD observations
+        for that country (e.g., {'Benin':  Path('Benin.xlsx'),
+        'Mali': Path('Mali.xlsx')}).
+    bad_obs_file : Path
+        Path to an Excel file containing known bad observations to exclude.
+        Must have columns 'COUNTRY' and 'ID' identifying observations
+        to remove.
     clip_to_geom : Path, optional
         Path to a vector file (GeoPackage, Shapefile, etc.) defining the
         spatial extent to which observations should be clipped. Points falling
         outside this geometry are removed.  If None, no spatial clipping
-        is applied (default:  None).
+        is applied.
 
     Returns
     -------
@@ -108,10 +114,9 @@ def create_wtd_obs_dataset(
     """
 
     dfs = []
-    for country in COUNTRIES:
-        print(f'Loading WTD data for {country}...')
-        filename = datadir / f'{country}.xlsx'
-        temp = read_obs_wl(filename)
+    for country, fpath in input_files.items():
+        print(f'Loading WTD data for {fpath.name}...')
+        temp = read_obs_wl(str(fpath))
         temp['country'] = country
         dfs.append(temp)
 
@@ -131,7 +136,7 @@ def create_wtd_obs_dataset(
     # Filter bad points.
     print('Filtering bad points...')
     bad_pts_df = pd.read_excel(
-        datadir / 'bad_obs_data.xlsx',
+        bad_obs_file,
         dtype={'COUNTRY': str, 'ID': str}
         )
 
