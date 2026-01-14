@@ -9,15 +9,61 @@
 # Repository: https://github.com/geo-stack/sahel
 # =============================================================================
 
-# You need to download the 'USGSEsriWCMC_GlobalIslands_v3_mpk.zip'
-# archive from:
-# https://www.sciencebase.gov/catalog/item/63bdf25dd34e92aad3cda273
-# and copy it to the folder './hdml/data/coastline'
+"""
+Extract and process African continent geometry from USGS Global
+Islands Database.
 
-# See also:
-# https://data.usgs.gov/datacatalog/data/USGS:63bdf25dd34e92aad3cda273
-# https://pubs.usgs.gov/publication/70202401
+This script performs the following tasks:
 
+1. Extracts the USGS Global Islands Database from .mpk format using 7-Zip
+2. Loads the global continents layer and isolates the African continent
+3. Optionally adds large islands within the African region
+4. Reprojects the geometry to Africa Albers Equal Area Conic (ESRI:102022)
+5. Creates a simplified version of the geometry for faster spatial operations
+
+The simplified geometry is used in downstream processing (e.g., clipping
+HydroATLAS basins) where the high-resolution coastline would significantly
+slow computation.
+
+Note: This script is optional. The output .gpkg files are already distributed
+in the GitHub repository as Git Large File Storage (LFS) files and do not need
+to be regenerated unless you want to modify the geometry or processing
+parameters.
+
+Requirements
+------------
+- Manual download of USGS Global Islands Database (see Data Source below)
+- 7-Zip executable (7za.exe) - included in the repository
+- The downloaded ZIP file must be placed in 'hdml/data/coastline/'
+
+
+Storage Requirements
+--------------------
+- Input ZIP archive: ~1.45 GB
+- Extracted . mpk and .gdb files: temporary (deleted after processing)
+- Output GeoPackage files: minimal (~few MB)
+
+
+Data Source
+-----------
+USGS Global Islands Database Version 3
+Download: https://www.sciencebase.gov/catalog/item/63bdf25dd34e92aad3cda273
+Catalog: https://data.usgs.gov/datacatalog/data/USGS: 63bdf25dd34e92aad3cda273
+Publication: https://pubs.usgs.gov/publication/70202401
+
+The USGS Global Islands Database provides standardized vector geometries for
+continents and major islands worldwide, derived from ESRI and WCMC sources.
+This dataset is used to define the spatial extent of the African continent
+for clipping and masking operations throughout the hydrodepthml pipeline.
+
+
+Outputs
+-------
+- 'coastline/africa_landmass. gpkg':
+      Full-resolution African continent geometry (ESRI:102022)
+- 'coastline/africa_landmass_simple.gpkg':
+      Simplified geometry for faster clipping operations (ESRI:102022)
+"""
 
 # ---- Standard imports.
 import shutil
