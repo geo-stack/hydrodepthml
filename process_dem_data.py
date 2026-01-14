@@ -10,42 +10,68 @@
 # =============================================================================
 
 """
-Script for downloading and converting NASADEM DEM .hgt tiles to GeoTIFF
-format for the entire African continent.
+Download, process, and mosaic NASADEM DEM tiles for Africa.
+
+This script performs the following tasks:
+
+1. Authenticates with NASA EarthData and searches for NASADEM tiles
+   covering the African continent
+2. Downloads NASADEM HGT (1 arc-second) tiles in ZIP format
+3. Extracts and converts HGT files to GeoTIFF format
+4. Builds a virtual raster (VRT) mosaic of all DEM tiles
+5. Reprojects the mosaic to Africa Albers Equal Area Conic (ESRI: 102022)
+   and clips to the African landmass
+
+
+Requirements
+------------
+- NASA EarthData account (free): https://urs.earthdata.nasa.gov/
+- Africa landmass geometry must be available (see 'process_usgs_coastal.py')
 
 To use this script, you must have a valid NASA Earthdata account. You will be
 prompted to provide your Earthdata username and password for authentication.
-You can create an account for free at: https://urs.earthdata.nasa.gov/
-
-This script automates the process of acquiring, extracting, and converting
-high-resolution Digital Elevation Model (DEM) data from NASA's NASADEM
-dataset
 
 
-Rationale for using NASADEM
----------------------------
-The NASADEM dataset was selected for this project because it provides
-high-resolution, globally available digital elevation data derived from
-the Shuttle Radar Topography Mission (SRTM) and enhanced with additional
-sources and improved processing. NASADEM improves upon the original SRTM
-by offering more complete coverage, fewer voids, and enhanced vertical
-accuracy, which is especially valuable for hydrological, geomorphological,
-and groundwater modeling across large regions like the Sahel. Its native
-resolution of 1 arc-second (~30 meters) is well-suited for regional-scale
-environmental analyses, making it an ideal foundation for extracting
-topographic features, surface water masks, and other terrain variables
-critical to understanding and predicting groundwater resources and
-surface water dynamics in West Africa.
+Storage Requirements
+--------------------
+- HGT files (compressed): ~26 GB
+- GeoTIFF files (converted): ~40 GB
+- Virtual mosaics (VRT): ~90 MB
+- Total peak storage:  ~66 GB
 
-see also https://github.com/geo-stack/hydrodepthml/pull/5
+Note: HGT files can be deleted or archived after conversion to GeoTIFF format
+to recover ~26 GB of disk space.
 
 
-References
-----------
-- NASADEM project: https://www.earthdata.nasa.gov/about/competitive-programs/
-  measures/new-nasa-digital-elevation-model
-- USGS Earthdata: https://e4ftl01.cr.usgs.gov/MEASURES/NASADEM_HGT.001/
-- https://www.earthdata.nasa.gov/data/catalog/lpcloud-nasadem-hgt-001
+Data Source
+-----------
+NASADEM Version 001 (1 arc-second resolution, ~30 meters at equator)
+Documentation:
+    https://www.earthdata.nasa.gov/data/catalog/lpcloud-nasadem-hgt-001
+
+NASADEM provides high-resolution digital elevation data derived from the
+Shuttle Radar Topography Mission (SRTM) and enhanced with additional sources
+and improved processing. It improves upon the original SRTM by offering more
+complete coverage, fewer voids, and enhanced vertical accuracy, which is
+especially valuable for hydrological, geomorphological, and groundwater
+modeling across large regions like the Sahel. Its native resolution makes it
+well-suited for regional-scale environmental analyses and extracting
+topographic features, surface water masks, and terrain variables critical to
+understanding groundwater resources and surface water dynamics in West Africa.
+
+See also: https://github.com/geo-stack/hydrodepthml/pull/5
+
+
+Outputs
+-------
+- 'dem/hgt/*. zip':
+      Downloaded NASADEM HGT tiles (raw format)
+- 'dem/tif/*.tif':
+      Converted GeoTIFF tiles in WGS84 (EPSG:4326)
+- 'dem/nasadem.vrt':
+      Virtual mosaic of all DEM tiles in original projection
+- 'dem/nasadem_102022.vrt':
+      Reprojected and clipped virtual mosaic (ESRI:102022, 30m resolution)
 """
 
 # ---- Standard imports.
