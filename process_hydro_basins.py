@@ -9,77 +9,113 @@
 # Repository: https://github.com/geo-stack/sahel
 # =============================================================================
 
-# HydroATLAS is a global, sub-basin hydrology dataset providing physical,
-# ecological, climatic and socio-economic attributes for river basins and
-# catchments at high resolution. It offers standardized basin geometries
-# (HydroBASINS) and >700 attributes (e.g. flow accumulation, land cover,
-# precipitation) for multiple nested basin levels to support water resources
-# management, modeling, and environmental assessment.
+"""
+Extract and process HydroBASINS sub-basins for Africa.
 
-# Here we download all BasinATLAS layer in geodatabase format.
+This script performs the following tasks:
 
-# See https://www.hydrosheds.org/products/hydrobasins.
+1. Extracts the specified basin level (default: level 12) from the
+   HydroBASINS Africa dataset
+2. Reprojects basins to Africa Albers Equal Area Conic (ESRI:102022)
+3. Clips basins to the African continent using a two-step process:
+   - First clips to Africa's bounding box for efficiency
+   - Then clips to simplified African continent geometry for accuracy
+4. Exports clipped basins with full HydroBASINS attributes
+
+HydroBASINS is part of the HydroATLAS suite and provides standardized
+sub-basin geometries with attributes including climate (precipitation,
+temperature, evapotranspiration), hydrological (flow accumulation, stream
+order), land cover, and socio-economic indicators. These attributes are used
+as features for water table depth prediction.
+
+Note: This script is OPTIONAL.
+
+The output GeoPackage file (basins_lvl12_102022.gpkg) is already distributed
+in the GitHub repository. This script only needs to be run if you want to use
+a different basin level. To change the level, modify the `level` variable in
+the script.
+
+Requirements
+------------
+- Manual download of HydroBASINS Africa dataset (see Data Source below)
+- The downloaded ZIP file must be placed in 'hdml/data/basins/'
+- Simplified Africa landmass geometry (see 'process_usgs_coastal.py')
+
+Storage Requirements
+--------------------
+- HydroBASINS ZIP archive (Africa): ~536 MB
+- Extracted shapefiles: temporary (deleted after processing)
+- Output basin GeoPackage (level 12): ~349 MB
+
+Data Source
+-----------
+HydroBASINS Version 1c (Africa region, levels 1-12)
+Download: https://www.hydrosheds.org/products/hydrobasins
+Documentation: https://www.hydrosheds.org/products/hydroatlas
+
+HydroBASINS is a global, standardized sub-basin boundary dataset derived from
+HydroSHEDS data.  It provides hierarchical basin geometries at 12 nested levels
+with associated HydroATLAS attributes for water resources management, modeling,
+and environmental assessment.
+
+Basin levels range from 1 (largest basins) to 12 (smallest sub-basins).
+Level 12 provides the highest spatial resolution for basin-scale analysis.
+
+Required file: 'hybas_af_lev01-12_v1c.zip'
+
+Outputs
+-------
+- 'basins/basins_lvl12_102022.gpkg':
+      African sub-basins at level 12 with full HydroBASINS attributes
+      (ESRI:102022 projection)
+"""
 
 # ---- Standard imports
 import zipfile
 import shutil
 
 # ---- Third party imports
-import requests
 import geopandas as gpd
 from shapely.geometry import box
 
 # ---- Local imports
 from hdml import __datadir__ as datadir
 
-DEST_FOLDER = datadir / 'basins'
-DEST_FOLDER.mkdir(parents=True, exist_ok=True)
-
-ZIP_PATH = DEST_FOLDER / 'BasinATLAS_Data_v10.gdb.zip'
-
-# %%
-
-# Download ATLAS databases.
-
-if not ZIP_PATH.exists():
-    key = 'BasinATLAS'
-    url = 'https://figshare.com/ndownloader/files/20082137'
-
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-
-        # Get the filename from the response headers.
-        cd = r.headers.get("Content-Disposition", "")
-        filename = cd.split("filename=")[-1].strip('"')
-
-        local_path = DEST_FOLDER / filename
-
-        # Skip if already downloaded.
-        if not local_path.exists():
-            print(f"Downloading {filename}...")
-            with open(local_path, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-            print(f"Downloaded {local_path.name} sucessfully.")
-        else:
-            print(f"'{filename}' already exists.")
+BASINS_PATH = datadir / 'basins'
+BASINS_PATH.mkdir(parents=True, exist_ok=True)
 
 
-# %%
+# Extract the .zip archive.
+
+zip_path = BASINS_PATH / 'hybas_af_lev01-12_v1c.zip'
+zip_fname = zip_path.name
+zip_url = 'https://www.hydrosheds.org/products/hydrobasins'
+
+if not zip_path.exists():
+    raise FileNotFoundError(
+        f"\n[HydroBASINS Database Missing]\n"
+        f"\nCould not locate required ZIP archive:\n"
+        f"    {zip_path}\n"
+        f"\nTo resolve:\n"
+        f"  1. Download the file '{zip_fname}' from:\n"
+        f"     {zip_url}\n"
+        f"  2. Move it to the folder:\n"
+        f"     {BASINS_PATH}\n"
+        )
 
 # Extract basins level 12 from the BasinATLAS.
-
-level = 12
-layer_name = f'BasinATLAS_v10_lev{level:02d}'
-
-extract_dir = DEST_FOLDER / 'BasinATLAS_Data_v10'
+extract_dir = BASINS_PATH / zip_path.stem
 if not extract_dir.exists():
     print("Extrating zip archive...", flush=True)
     extract_dir.mkdir(parents=True, exist_ok=True)
-    with zipfile.ZipFile(ZIP_PATH, 'r') as zip_ref:
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extract_dir)
 
+
 # %%
+
+level = 12
+layer_name = f'hybas_af_lev{level:02d}_v1c'
 
 # Clip the basins to the African continent.
 
@@ -87,10 +123,8 @@ africa_gdf = gpd.read_file(
     datadir / 'coastline' / 'africa_landmass_simple.gpkg'
     )
 
-basins_all_path = extract_dir / 'BasinATLAS_v10.gdb'
-
-print(f'Reading {layer_name} from {basins_all_path.name}...', flush=True)
-basins_gdf = gpd.read_file(str(basins_all_path), layer=layer_name)
+print(f'Reading {layer_name} from {extract_dir.name}...', flush=True)
+basins_gdf = gpd.read_file(extract_dir, layer=layer_name)
 print('Number of basins:', len(basins_gdf), flush=True)
 
 print('Projecting to ESRI:102022...', flush=True)
@@ -108,7 +142,7 @@ basins_africa = gpd.clip(basins_gdf_bbox, africa_gdf.union_all())
 print('Number of basins:', len(basins_africa), flush=True)
 
 print("Saving results to file...", flush=True)
-basins_path = DEST_FOLDER / f'basins_lvl{level:02d}_102022.gpkg'
+basins_path = BASINS_PATH / f'basins_lvl{level:02d}_102022.gpkg'
 basins_africa.to_file(basins_path, layer=layer_name, driver="GPKG")
 
 # Clean up temp files.
