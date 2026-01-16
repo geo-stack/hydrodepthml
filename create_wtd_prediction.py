@@ -326,9 +326,6 @@ with open(model_path, 'rb') as f:
 
 wtd_predicted = loaded_model.predict(X)
 
-import rasterio
-import numpy as np
-
 dem_path = tiles_cropped_dir / "dem_cond" / "dem_cond_tile_020_004.tif"
 
 output_path = datadir / 'predict' / 'pred_wtd_tile_020_004.tif'
