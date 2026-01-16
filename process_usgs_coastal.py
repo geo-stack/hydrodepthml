@@ -25,10 +25,11 @@ The simplified geometry is used in downstream processing (e.g., clipping
 HydroATLAS basins) where the high-resolution coastline would significantly
 slow computation.
 
-Note: This script is OPTIONAL. The output .gpkg files are already distributed
-in the GitHub repository as Git Large File Storage (LFS) files and do not need
-to be regenerated unless you want to modify the geometry or processing
-parameters.
+Note: This script is OPTIONAL.
+
+The output .gpkg files are already distributed in the GitHub repository a
+Git Large File Storage (LFS) files and do not need to be regenerated unless
+you want to modify the geometry or processing parameters.
 
 Requirements
 ------------

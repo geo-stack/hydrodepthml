@@ -31,10 +31,12 @@ The resulting dataset is used for training the water table depth prediction
 model, with basin-level climate attributes and time-specific precipitation
 and NDVI features.
 
-Note: This script is OPTIONAL. The output .gpkg files and input Excel data
-files are already distributed in the GitHub repository. This script only needs
-to be run if new water table depth observations are added.  If adding data for
-a new country, the file path must be added to the INPUTFILES dictionary.
+Note: This script is OPTIONAL.
+
+The output .gpkg files and input Excel data files are already distributed in
+the GitHub repository. This script only needs to be run if new water table
+depth observations are added.  If adding data for a new country, the file path
+must be added to the INPUTFILES dictionary.
 
 
 Requirements

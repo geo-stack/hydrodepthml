@@ -35,17 +35,20 @@ in the GitHub repository. This script only needs to be run if you want to use
 a different basin level. To change the level, modify the `level` variable in
 the script.
 
+
 Requirements
 ------------
 - Manual download of HydroBASINS Africa dataset (see Data Source below)
 - The downloaded ZIP file must be placed in 'hdml/data/basins/'
 - Simplified Africa landmass geometry (see 'process_usgs_coastal.py')
 
+
 Storage Requirements
 --------------------
 - HydroBASINS ZIP archive (Africa): ~536 MB
 - Extracted shapefiles: temporary (deleted after processing)
 - Output basin GeoPackage (level 12): ~349 MB
+
 
 Data Source
 -----------
@@ -62,6 +65,7 @@ Basin levels range from 1 (largest basins) to 12 (smallest sub-basins).
 Level 12 provides the highest spatial resolution for basin-scale analysis.
 
 Required file: 'hybas_af_lev01-12_v1c.zip'
+
 
 Outputs
 -------

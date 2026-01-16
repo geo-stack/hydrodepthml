@@ -29,13 +29,15 @@ Two datasets are produced:
     Daily NDVI averages for basins containing water table observations,
     covering 2000–2025.
 
-Note: This script is OPTIONAL. The output .h5 files are already distributed
-in the GitHub repository as Git Large File Storage (LFS) files and do not need
-to be regenerated unless you want to add more water level observations for
-model training or update/change the reference date (2025-07-31) for water table
-depth prediction. If adding new observation sites, you must also update the
-MODIS_TILE_NAMES variable to include the corresponding tiles and year ranges
-(see inline comments and https://modis-land.gsfc.nasa.gov/MODLAND_grid.html).
+Note: This script is OPTIONAL.
+
+The output .h5 files are already distributed in the GitHub repository as Git
+Large File Storage (LFS) files and do not need to be regenerated unless you
+want to add more water level observations for model training or update/change
+the reference date (2025-07-31) for water table depth prediction. If adding
+new observation sites, you must also update the MODIS_TILE_NAMES variable to
+include the corresponding tiles and year ranges (see inline comments and
+https://modis-land.gsfc.nasa.gov/MODLAND_grid.html).
 
 
 Requirements
