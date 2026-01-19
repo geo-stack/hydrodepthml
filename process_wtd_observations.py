@@ -80,6 +80,10 @@ Outputs
 - 'wtd/wtd_basin_geometry.gpkg':
       HydroATLAS level 12 basin geometries for basins containing observations
 
+Note that all paths are relative to the repository's 'data/' directory
+(e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
+'C:/Users/User/Documents/hydrodepthml/data/').
+
 
 Notes
 -----

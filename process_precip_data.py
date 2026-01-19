@@ -71,6 +71,10 @@ Outputs
 - 'precip_means_africa_basins_2024-2025.h5':
       Basin-averaged precipitation for prediction
 
+Note that all paths are relative to the repository's 'data/' directory
+(e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
+'C:/Users/User/Documents/hydrodepthml/data/').
+
 
 Notes
 -----

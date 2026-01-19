@@ -79,6 +79,10 @@ Outputs
       Basin-averaged NDVI for training (2000–2025)
 - 'ndvi_means_africa_basins.h5':
       Basin-averaged NDVI for prediction (2024–2025)
+
+Note that all paths are relative to the repository's 'data/' directory
+(e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
+'C:/Users/User/Documents/hydrodepthml/data/').
 """
 
 # ---- Standard imports

@@ -72,6 +72,10 @@ Outputs
 - 'basins/basins_lvl12_102022.gpkg':
       African sub-basins at level 12 with full HydroBASINS attributes
       (ESRI:102022 projection)
+
+Note that all paths are relative to the repository's 'data/' directory
+(e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
+'C:/Users/User/Documents/hydrodepthml/data/').
 """
 
 # ---- Standard imports

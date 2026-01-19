@@ -72,6 +72,10 @@ Outputs
       Virtual mosaic of all DEM tiles in original projection
 - 'dem/nasadem_102022.vrt':
       Reprojected and clipped virtual mosaic (ESRI:102022, 30m resolution)
+
+Note that all paths are relative to the repository's 'data/' directory
+(e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
+'C:/Users/User/Documents/hydrodepthml/data/').
 """
 
 # ---- Standard imports.

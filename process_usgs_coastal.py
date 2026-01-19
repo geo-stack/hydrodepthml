@@ -64,6 +64,10 @@ Outputs
       Full-resolution African continent geometry (ESRI:102022)
 - 'coastline/africa_landmass_simple.gpkg':
       Simplified geometry for faster clipping operations (ESRI:102022)
+
+Note that all paths are relative to the repository's 'data/' directory
+(e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
+'C:/Users/User/Documents/hydrodepthml/data/').
 """
 
 # ---- Standard imports.
