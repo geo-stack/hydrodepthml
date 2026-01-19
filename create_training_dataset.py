@@ -29,19 +29,23 @@ if not nasadem_mosaic_path.exists():
         "script to download and process DEM data."
         )
 
-gwl_gdf = gpd.read_file(datadir / "wtd" / "wtd_obs_all.gpkg")
-
-tiles_gdf = gpd.read_file(datadir / "features" / "tiles_wtd_obs.gpkg")
-
 with rasterio.open(nasadem_mosaic_path) as src:
     # The horizontal and vertical resolution should be the same.
     pixel_size = src.res[0]
+
+
+gwl_gdf = gpd.read_file(datadir / "wtd" / "wtd_obs_all.gpkg")
+
+tiles_gdf = gpd.read_file(datadir / "features" / "tiles_wtd_obs.gpkg")
 
 tiles_overlap_dir = datadir / 'features' / 'tiles (overlapped)'
 tiles_overlap_dir.mkdir(parents=True, exist_ok=True)
 
 tiles_cropped_dir = datadir / 'features' / 'tiles (cropped)'
 tiles_cropped_dir.mkdir(parents=True, exist_ok=True)
+
+model_dir = datadir / 'model'
+model_dir.mkdir(parents=True, exist_ok=True)
 
 # %%
 
@@ -73,7 +77,7 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
 
 # %%
 
-# Extract top-derived features from the pre-processed tiles.
+# Extract topo-derived features from the pre-processed tiles.
 
 gwl_gdf['point_x'] = gwl_gdf.geometry.x
 gwl_gdf['point_y'] = gwl_gdf.geometry.y
@@ -188,10 +192,6 @@ gwl_gdf.to_csv(datadir / "wtd_obs_training_dataset.csv")
 
 
 # %%
-
-model_dir = datadir / 'model'
-model_dir.mkdir(parents=True, exist_ok=True)
-
 
 # Add precip and ndvi avg sub-basin values for each water level observation.
 
