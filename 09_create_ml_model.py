@@ -10,7 +10,7 @@
 # =============================================================================
 
 # ---- Standard imports
-from pathlib import Path
+from datetime import datetime
 import pickle
 
 # ---- Third party imports
@@ -28,14 +28,20 @@ from hdml.modeling import perform_cross_validation, plot_pred_vs_obs
 model_path = datadir / 'model' / 'wtd_predict_model.pkl'
 
 
+wtd_path = pd.read_csv(datadir / 'model' / "wtd_obs_training_dataset.csv")
+if not wtd_path.exists():
+    raise FileNotFoundError(
+        "Make sure to run 'create_training_dataset.py' before running this "
+        "script generate the 'wtd_obs_training_dataset.csv'."
+        )
+
+
 # %%
 
-gwl_df = pd.read_csv(datadir / 'model' / "wtd_obs_training_dataset.csv")
+df = pd.read_csv(wtd_path)
+df = df.dropna()
 
-df = gwl_df.copy()
-df = gwl_df.dropna()
-
-varlist = [
+features = [
     'ratio_dist',
     'ratio_stream',
     'dist_stream',
@@ -78,13 +84,13 @@ plt.tight_layout()
 
 plt.close('all')
 
-X = df[varlist].values
+X = df[features].values
 y = df['NS'].values
 
-X_train = df.loc[train_index, varlist].values
+X_train = df.loc[train_index, features].values
 y_train = df.loc[train_index, 'NS'].values
 
-X_test = df.loc[test_index, varlist].values
+X_test = df.loc[test_index, features].values
 y_test = df.loc[test_index, 'NS'].values
 
 params = {
@@ -96,15 +102,20 @@ Cl = RandomForestRegressor(**params)
 Cl.fit(X_train, y_train)
 
 # Save the model.
+model_data = {
+    'model': Cl,
+    'feature_names': features,
+    'training_date': datetime.now().strftime('%Y-%m-%d')
+    }
 with open(model_path, 'wb') as f:
-    pickle.dump(Cl, f)
+    pickle.dump(model_data, f)
 
 y_eval = Cl.predict(X_test)
 
-importances = pd.DataFrame(columns=['importance'], index=varlist)
-for f in range(len(varlist)):
+importances = pd.DataFrame(columns=['importance'], index=features)
+for f in range(len(features)):
     importances.loc[
-        varlist[f], 'importance'
+        features[f], 'importance'
         ] = Cl.feature_importances_[f]
 importances = importances.sort_values(by='importance', ascending=False)
 
@@ -160,34 +171,36 @@ print()
 print("Best hyperparamter found :")
 print(best_params)
 
-# # %%
+# %%
 
-# # Hyperparameter optimization (GridSearchCV).
+# Hyperparameter optimization (GridSearchCV).
 
-# params_grid = {
-#     'n_estimators': [75, 100, 125],
-#     'max_depth': [8, 9, 10],
-#     'learning_rate': [0.05, 0.01, 0.02],
-#     'subsample': [0.5, 0.6, 0.7],
-#     'colsample_bytree': [0.6, 0.7, 0.8],
-#     'gamma': [0.25, 0.5, 0.75],
-#     'reg_alpha': [1.75, 2, 2.25],
-#     'reg_lambda': [1.25, 1.5, 1.75]
-#     }
+Cl = RandomForestRegressor(random_state=42)
 
-# grid_search = GridSearchCV(
-#     estimator=xgb_model,
-#     param_grid=params_grid,
-#     scoring='neg_mean_squared_error',
-#     # cv=LeaveOneGroupOut(),
-#     verbose=2,
-#     n_jobs=-1
-#     )
+params_grid = {
+    'n_estimators': [75, 100, 125],
+    'max_depth': [8, 9, 10],
+    'learning_rate': [0.05, 0.01, 0.02],
+    'subsample': [0.5, 0.6, 0.7],
+    'colsample_bytree': [0.6, 0.7, 0.8],
+    'gamma': [0.25, 0.5, 0.75],
+    'reg_alpha': [1.75, 2, 2.25],
+    'reg_lambda': [1.25, 1.5, 1.75]
+    }
 
-# grid_search.fit(X, y)
+grid_search = GridSearchCV(
+    estimator=Cl,
+    param_grid=params_grid,
+    scoring='neg_mean_squared_error',
+    # cv=LeaveOneGroupOut(),
+    verbose=2,
+    n_jobs=-1
+    )
 
-# best_params = random_search.best_params_
+grid_search.fit(X, y)
 
-# print()
-# print("Best hyperparamter found :")
-# print(best_params)
+best_params = random_search.best_params_
+
+print()
+print("Best hyperparamter found :")
+print(best_params)
