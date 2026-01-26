@@ -322,7 +322,7 @@ X = df.loc[:, varlist].values
 
 model_path = datadir / 'model' / 'wtd_predict_model.pkl'
 with open(model_path, 'rb') as f:
-    loaded_model = pickle. load(f)
+    loaded_model = pickle.load(f)
 
 wtd_predicted = loaded_model.predict(X)
 
