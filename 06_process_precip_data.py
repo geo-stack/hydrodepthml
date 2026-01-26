@@ -37,20 +37,17 @@ Large File Storage (LFS) files and do not need to be regenerated unless you
 want to add more water level observations for model training or update/change
 the reference date (2025-07-31) for water table depth prediction.
 
-
 Requirements
 ------------
 - HydroATLAS level 12 basins must be available (see 'process_hydro_basins.py')
 - Africa landmass geometry for bounding box extraction
   (see 'process_usgs_coastal.py')
 
-
 Storage Requirements
 --------------------
 - CHIRPS GeoTIFF files (Africa, 2000–2025): ~32.6 GB
 - Compiled precipitation means (HDF5): ~682 MB (620 MB + 62 MB)
 - Total storage: ~33.3 GB
-
 
 Data Source
 -----------
@@ -60,7 +57,6 @@ Temporal coverage: 1981–present (daily)
 Documentation: https://www.chc.ucsb.edu/data/chirps
 Data combines satellite imagery with in-situ station data for improved
 accuracy data-scarce regions.
-
 
 Outputs
 -------
@@ -74,7 +70,6 @@ Outputs
 Note that all paths are relative to the repository's 'data/' directory
 (e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
 'C:/Users/User/Documents/hydrodepthml/data/').
-
 
 Notes
 -----
