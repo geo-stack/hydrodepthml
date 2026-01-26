@@ -39,7 +39,6 @@ new observation sites, you must also update the MODIS_TILE_NAMES variable to
 include the corresponding tiles and year ranges (see inline comments and
 https://modis-land.gsfc.nasa.gov/MODLAND_grid.html).
 
-
 Requirements
 ------------
 - NASA EarthData account (free): https://urs.earthdata.nasa.gov/
@@ -49,7 +48,6 @@ Requirements
 
 To use this script, you must have a valid NASA Earthdata account. You will be
 prompted to provide your Earthdata username and password for authentication.
-
 
 Storage Requirements
 --------------------
@@ -67,7 +65,6 @@ Data Source
 MODIS MOD13Q1 Version 6.1 (Terra satellite, 250m resolution, 16-day composite)
 Documentation: https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod13q1-006
 Coverage: 2000–present (Terra launch:  late 1999).
-
 
 Outputs
 -------
