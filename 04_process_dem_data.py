@@ -22,7 +22,6 @@ This script performs the following tasks:
 5. Reprojects the mosaic to Africa Albers Equal Area Conic (ESRI: 102022)
    and clips to the African landmass
 
-
 Requirements
 ------------
 - NASA EarthData account (free): https://urs.earthdata.nasa.gov/
@@ -30,7 +29,6 @@ Requirements
 
 To use this script, you must have a valid NASA Earthdata account. You will be
 prompted to provide your Earthdata username and password for authentication.
-
 
 Storage Requirements
 --------------------
@@ -41,7 +39,6 @@ Storage Requirements
 
 Note: HGT files can be deleted or archived after conversion to GeoTIFF format
 to recover ~26 GB of disk space.
-
 
 Data Source
 -----------
@@ -60,7 +57,6 @@ topographic features, surface water masks, and terrain variables critical to
 understanding groundwater resources and surface water dynamics in West Africa.
 
 See also: https://github.com/geo-stack/hydrodepthml/pull/5
-
 
 Outputs
 -------
