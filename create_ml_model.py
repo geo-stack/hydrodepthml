@@ -17,7 +17,6 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import (
     RandomizedSearchCV, LeaveOneGroupOut, GridSearchCV)

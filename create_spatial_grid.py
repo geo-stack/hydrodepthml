@@ -55,7 +55,6 @@ Note that all paths are relative to the repository's 'data/' directory
 (e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
 'C:/Users/User/Documents/hydrodepthml/data/').
 
-
 Notes
 -----
 - Tile size: 5000 × 5000 pixels at 30m resolution (150 km × 150 km)

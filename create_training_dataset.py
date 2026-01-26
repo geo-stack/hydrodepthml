@@ -9,6 +9,66 @@
 # Repository: https://github.com/geo-stack/hydrodepthml
 # =============================================================================
 
+"""
+Generate topographic and climate features for water table depth model training.
+
+This script performs the following tasks:
+
+1. Generates topographic features from NASADEM DEM for all tiles containing
+   water table depth observations (streams, ridges, terrain statistics)
+2. Extracts topographic feature values at each observation point location
+3. Calculates derived features: distances to streams/ridges, elevation
+   differences, and topographic ratios
+4. Adds basin-averaged NDVI and precipitation time series for each observation
+5. Exports the complete training dataset with all features
+
+The resulting dataset contains all predictor variables (topographic, climate,
+and basin attributes) needed to train the water table depth prediction model.
+
+Requirements
+------------
+- NASADEM DEM virtual raster (ESRI:102022)(see 'process_nasadem.py')
+- Processed WTD observations (see 'process_wtd_obs.py')
+- Tile index for WTD observations (see 'generate_tiles.py')
+- NDVI basin means (training) ('process_ndvi_data.py')
+- Precipitation basin means (training) (see 'process_precip_data.py')
+
+Storage Requirements
+--------------------
+- Final training dataset: minimal (~few MB)
+- Trained model (~20 MB)
+
+Feature Extraction
+------------------
+Topographic features derived from NASADEM:
+- point_z, stream_z, ridge_z: Elevations (m) at point, nearest stream, and
+  nearest ridge
+- stream_x, stream_y, ridge_x, ridge_y: Coordinates of nearest stream/ridge
+- dist_stream, dist_top: Euclidean distances (m) to stream and ridge
+- ratio_dist: Ratio of distance to stream vs. distance to ridge
+- alt_stream, alt_top: Elevation differences (m) from point to stream/ridge
+- ratio_stream: Slope ratio (elevation difference / distance to stream)
+- Terrain statistics: Hessian and gradient statistics over multiple scales
+  (long-range, short-range, stream-focused)
+
+Climate features (basin-averaged over recharge period):
+- ndvi: Mean NDVI from MODIS MOD13Q1
+- precipitation: Mean daily precipitation (mm) from CHIRPS
+
+Outputs
+-------
+- 'features/tiles (overlapped)/<feature_name>/':
+      Topographic feature tiles with overlap for seamless extraction
+- 'features/tiles (cropped)/<feature_name>/':
+      Topographic feature tiles cropped to tile boundaries
+- 'model/wtd_obs_training_dataset.csv':
+      Final training dataset with all features (topographic + climate)
+
+Note that all paths are relative to the repository's 'data/' directory
+(e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
+'C:/Users/User/Documents/hydrodepthml/data/').
+"""
+
 # ---- Standard imports
 import ast
 
@@ -187,9 +247,6 @@ gwl_gdf['ratio_stream'] = (
     gwl_gdf['alt_stream'] / np.maximum(gwl_gdf['dist_stream'], pixel_size)
     )
 
-gwl_gdf.to_file(datadir / "wtd_obs_training_dataset.gpkg", driver="GPKG")
-gwl_gdf.to_csv(datadir / "wtd_obs_training_dataset.csv")
-
 
 # %%
 
@@ -219,4 +276,6 @@ for index, row in gwl_gdf.iterrows():
     precip_values = precip_means_wtd_basins.loc[date_range, basin_id]
     gwl_gdf.loc[index, 'precipitation'] = np.mean(precip_values)
 
+
+print("Saving dataset to file...")
 gwl_gdf.to_csv(model_dir / "wtd_obs_training_dataset.csv")
