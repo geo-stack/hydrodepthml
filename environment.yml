@@ -26,6 +26,7 @@ dependencies:
 
   # Visualization
   - matplotlib
+  - seaborn
 
   # Geospatial libraries (critical - includes GDAL)
   - gdal
