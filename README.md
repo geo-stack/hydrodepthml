@@ -89,7 +89,40 @@ These instructions use graphical interfaces (Anaconda Navigator and GitHub Deskt
 - **NASADEM DEM** is required for running predictions or training models (run `04_process_dem_data.py`)
 - *MODIS NDVI and CHIRPS data are optional if using pre-processed files included in the repository
 
-## 4. How to Use
+## 4. Grid-Based Processing Strategy
+
+### Coordinate Reference System
+
+All spatial operations use **ESRI:102022 - Africa Albers Equal Area Conic** projection.
+
+**Why this projection?**
+- **Equal Area**: Preserves surface area calculations critical for hydrological modeling
+- **Africa-optimized**: Designed specifically for continent-wide coverage
+- **Minimal distortion**: Reduces area and distance errors compared to global projections
+
+**Reference:** [ESRI:102022 Specifications](https://spatialreference.org/ref/esri/102022/) | [EPSG.io](https://epsg.io/102022)
+
+### Grid-Based Approach
+
+To partition the study area into manageable spatial units, the workflow uses a **tiling system**:
+
+1. **`07_create_spatial_grid.py`** generates a regular grid of tiles (150 km × 150 km with 3 km overlap) covering the African continent
+2. **DEM-derived features** are extracted tile-by-tile to handle large raster datasets efficiently
+3. **Water table depth predictions** are generated using the appropriate tile set
+
+**Tile specifications:**
+- Size: 5000 × 5000 pixels at 30m resolution (150 km × 150 km)
+- Overlap: 100 pixels (3 km) to ensure seamless feature extraction across boundaries
+- Consistent spatial indexing enables efficient parallel processing
+
+The map below illustrates the complete tile grid structure across Africa. White/transparent cells represent valid prediction tiles that intersect
+the African landmass, while red cells highlight tiles containing actual groundwater observations used for model training.
+
+<p align="center">
+  <img src="docs/grid_coverage_map.png" alt="Spatial Grid Coverage" width="65%">
+</p>
+
+## 5. How to Use
 
 The diagram below shows the complete data processing and modeling workflow. Use it to determine which scripts to run based on your objectives.
 
@@ -97,7 +130,7 @@ The diagram below shows the complete data processing and modeling workflow. Use 
 > Detailed documentation for each script, including parameters and options, is provided in the docstring at the beginning of each `.py` file.
 
 <p align="center">
-  <img src="docs/chart_scripts_usage.drawio.svg" alt="Workflow Diagram" width="95%">
+  <img src="docs/chart_scripts_usage.drawio.svg" alt="Workflow Diagram" width="75%">
 </p>
 
 ## 5. Acknowledgements
