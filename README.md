@@ -1,3 +1,21 @@
+# hydrodepthml
+
+## Table of Contents
+
+- [1. Project Overview](#1-project-overview)
+- [2. Installation Instructions](#2-installation-instructions)
+  - [Prerequisites](#prerequisites)
+  - [Step 1: Clone the Repository](#step-1-clone-the-repository-with-github-desktop)
+  - [Step 2: Create Environment](#step-2-create-environment-with-anaconda-navigator)
+  - [Step 3: Install the Package](#step-3-install-the-hydrodepthml-package)
+- [3. Storage Requirements](#3-storage-requirements)
+- [4. Grid-Based Processing Strategy](#4-grid-based-processing-strategy)
+  - [Coordinate Reference System](#coordinate-reference-system)
+  - [Grid-Based Approach](#grid-based-approach)
+- [5. How to Use](#5-how-to-use)
+- [6. Acknowledgements](#6-acknowledgements)
+
+
 ## 1. Project Overview
 
 This project aims to leverage geospatial (GIS) and climatic data to develop a tool based on machine learning modeling to assess the static depth to water (DTW) in crystalline basement aquifers of Africa. Accurate water table depth predictions are crucial for sustainable water resource management, especially in regions dependent on rainfed agriculture.
@@ -133,7 +151,7 @@ The diagram below shows the complete data processing and modeling workflow. Use 
   <img src="docs/chart_scripts_usage.drawio.svg" alt="Workflow Diagram" width="75%">
 </p>
 
-## 5. Acknowledgements
+## 6. Acknowledgements
 
 This project was developed by Les solutions géostack, Inc. as part of a research initiative for The World Bank Group.  
 For inquiries, contact: info@geostack.ca
