@@ -12,7 +12,8 @@ The training data includes:
 
 These instructions use graphical interfaces (Anaconda Navigator and GitHub Desktop) for ease of use.
 
-> **Note for Advanced Users:** If you prefer using command-line tools, you can use `git clone`, `conda env create -f environment.yml`, and standard conda/pip commands. The repository includes an `environment.yml` file with all dependencies.
+> [!NOTE]
+> If you prefer using command-line tools, you can use `git clone`, `conda env create -f environment.yml`, and standard conda/pip commands. The repository includes an `environment.yml` file with all dependencies.
 
 ### Prerequisites
 
@@ -88,15 +89,12 @@ These instructions use graphical interfaces (Anaconda Navigator and GitHub Deskt
 - **NASADEM DEM** is required for running predictions or training models (run `04_process_dem_data.py`)
 - *MODIS NDVI and CHIRPS data are optional if using pre-processed files included in the repository
 
-## 4. Workflow Overview
+## 4. How to Use
 
-The hydrodepthml project consists of multiple processing scripts that work together to download, process, and model groundwater depth data.
-The flowchart below illustrates the complete workflow, showing which scripts to run in sequence and how the data flows through the pipeline.
+The diagram below shows the complete data processing and modeling workflow. Use it to determine which scripts to run based on your objectives.
 
-Understanding this workflow will help you:
-- Identify which scripts are necessary for your specific use case
-- Determine the order in which to run the processing steps
-- Understand dependencies between different data processing stages
+> [!NOTE]
+> Detailed documentation for each script, including parameters and options, is provided in the docstring at the beginning of each `.py` file.
 
 <p align="center">
   <img src="docs/chart_scripts_usage.drawio.svg" alt="Workflow Diagram" width="95%">
