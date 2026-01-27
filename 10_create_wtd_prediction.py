@@ -29,13 +29,11 @@ from hdml.topo import generate_topo_features_for_tile
 from hdml.wtd_helpers import recharge_period_from_basin_area
 from hdml.gishelpers import raster_to_dataframe, raster_to_flat_array
 
-# The reference date from which NDVI and precipitation averages are
-# calculated.
+# The reference date from which NDVI and precipitation averages are calculated.
 REF_DATE = datetime(2025, 7, 31)
 
 # Define here the lat/lon of the area for which you want to
 # predict the water level.
-
 LAT_MIN = 10.13882791720867
 LAT_MAX = 11.00020461261005
 
@@ -46,8 +44,26 @@ LON_MAX = -12.072458460416062
 PREDICT_PATH = datadir / 'predict'
 PREDICT_PATH.mkdir(parents=True, exist_ok=True)
 
+# The model to use for the predictions.
+MODEL_PATH = datadir / 'model' / 'wtd_predict_model.pkl'
+
 
 # %%
+
+if not MODEL_PATH.exists():
+    raise FileNotFoundError(
+        "Model not found. You can create a new model with "
+        "'08_create_ml_model.py'."
+        )
+
+if REF_DATE < datetime(2025, 1, 1) or REF_DATE > datetime(2025, 12, 31):
+    raise ValueError(
+        "The reference date cannot be before 2025/01/01 and after 2025/12/31. "
+        "If you want to use another reference date, you will need to edit "
+        "the 'predict_year_range' variable in '05_process_ndvi_data.py' and "
+        "run the script again to produce a new 'basins_lvl12_102022.gpkg' "
+        "file."
+        )
 
 predict_bbox_gdf = gpd.GeoDataFrame(
     geometry=[box(LON_MIN, LAT_MIN, LON_MAX, LAT_MAX)],
@@ -68,9 +84,7 @@ with rasterio.open(nasadem_mosaic_path) as src:
 gwl_gdf = gpd.read_file(datadir / "wtd" / "wtd_obs_all.gpkg")
 
 tiles_gdf = gpd.read_file(datadir / "features" / "tiles_africa_geom.gpkg")
-tiles_gdf = filter_tiles(
-    predict_bbox_gdf, tiles_gdf
-    )
+tiles_gdf = filter_tiles(predict_bbox_gdf, tiles_gdf)
 
 basins_path = datadir / 'basins' / 'basins_lvl12_102022.gpkg'
 basins_gdf = gpd.read_file(basins_path)
@@ -164,7 +178,16 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
     else:
         progress = f"[{tile_count}/{total_tiles}]"
 
-    print(f'{progress} Extracting data from rasters...')
+    tile_index = tile_bbox_data.tile_index
+    ty, tx = ast.literal_eval(tile_index)
+
+    h5_path = PREDICT_PATH / f"predict_dset_tile_{ty:03d}_{tx:03d}.h5"
+    if h5_path.exists():
+        print(f'{progress} Skipping because h5 file already exists '
+              f'for tile {tile_index}.')
+        continue
+
+    print(f'{progress} Extracting data from rasters for tile {tile_index}...')
 
     tile_index = tile_bbox_data.tile_index
     ty, tx = ast.literal_eval(tile_index)
@@ -223,7 +246,8 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
     df['hybas_id'] = raster_to_flat_array(
         tif_path, band=1, nodata_to_nan=False)
 
-    print(f'{progress} Calculating distances and ratios...')
+    print(f'{progress} Calculating distances and ratios '
+          f'for tile {tile_index}...')
 
     df['dist_stream'] = (
         (df.point_x - df.stream_x)**2 +
@@ -247,8 +271,8 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
         df['alt_stream'] / np.maximum(df['dist_stream'], pixel_size)
         )
 
-    print(f"{progress} Adding NDVI and precipitation data "
-          f"to training dataset...")
+    print(f"{progress} Adding NDVI and precip data "
+          f"to training dataset for tile {tile_index}...")
 
     ndvi_basin_means = pd.read_hdf(
         datadir / 'ndvi' / 'ndvi_means_africa_basins_2024-2025.h5',
@@ -263,6 +287,12 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
     hybas_ids = np.unique(df.hybas_id)
 
     for i, hybas_id in enumerate(hybas_ids):
+        if hybas_id == 0:
+            mask = (df.hybas_id == 0)
+            df.loc[mask, 'ndvi'] = np.nan
+            df.loc[mask, 'precipitation'] = np.nan
+            continue
+
         mask = (df.hybas_id == hybas_id)
 
         basins_data = basins_gdf.loc[hybas_id]
@@ -281,71 +311,64 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
             precip_basin_means.loc[date_range, hybas_id]
             )
 
-    print(f'{progress} Saving predict dataframe to disk...')
-    h5_path = PREDICT_PATH / f"predict_dset_tile_{ty:03d}_{tx:03d}.h5"
+    print(f'{progress} Saving predict dataframe to disk '
+          f'for tile {tile_index}...')
+
     df.to_hdf(h5_path, key='data', mode='w')
 
 
 # %%
 
-df = pd.read_hdf(
-    "D:/Projets/hydrodepthml/data/predict/predict_dset_tile_020_004.h5",
-    key='data'
-    )
+# Load the model.
+with open(MODEL_PATH, 'rb') as f:
+    data = pickle.load(f)
 
-varlist = [
-    'ratio_dist',
-    'ratio_stream',
-    'dist_stream',
-    'alt_stream',
-    'dist_top',
-    'alt_top',
-    'long_hessian_max',
-    'long_hessian_mean',
-    'long_hessian_var',
-    'long_hessian_skew',
-    'long_hessian_kurt',
-    'long_grad_mean',
-    'long_grad_var',
-    'short_grad_max',
-    'short_grad_var',
-    'short_grad_mean',
-    'stream_grad_max',
-    'stream_grad_var',
-    'stream_grad_mean',
-    'stream_hessian_max',
-    'ndvi',
-    'precipitation',
-    ]
+    model = data['model']
+    features = data['feature_names']
 
-X = df.loc[:, varlist].values
 
-model_path = datadir / 'model' / 'wtd_predict_model.pkl'
-with open(model_path, 'rb') as f:
-    loaded_model = pickle.load(f)
+tile_count = 0
+for _, tile_bbox_data in tiles_gdf.iterrows():
+    tile_count += 1
 
-wtd_predicted = loaded_model.predict(X)
+    if total_tiles >= 100:
+        progress = f"[{tile_count:03d}/{total_tiles}]"
+    elif total_tiles >= 10:
+        progress = f"[{tile_count:02d}/{total_tiles}]"
+    else:
+        progress = f"[{tile_count}/{total_tiles}]"
 
-dem_path = tiles_cropped_dir / "dem_cond" / "dem_cond_tile_020_004.tif"
+    # Load spatially distributed features data.
 
-output_path = datadir / 'predict' / 'pred_wtd_tile_020_004.tif'
+    h5_path = PREDICT_PATH / f"predict_dset_tile_{ty:03d}_{tx:03d}.h5"
+    df = pd.read_hdf(h5_path, key='data')
+    X = df.loc[:, features].values
 
-with rasterio.open(dem_path) as dem:
-    # Reshape 1D predictions to 2D grid
-    height, width = dem.height, dem.width
+    # Predict water table depth for the whole tile.
+    wtd_predicted = model.predict(X)
 
-    wtd_2d = wtd_predicted.reshape(height, width)
+    # Save results.
+    dem_path = (
+        tiles_cropped_dir / "dem_cond" / "dem_cond_tile_{ty:03d}_{tx:03d}.tif"
+        )
+    output_path = PREDICT_PATH / 'pred_wtd_tile_{ty:03d}_{tx:03d}.tif'
 
-    # Copy metadata from DEM.
-    output_meta = dem.meta.copy()
+    with rasterio.open(dem_path) as dem:
+        # Reshape 1D predictions to 2D grid
+        height, width = dem.height, dem.width
 
-    # Update metadata for predictions.
-    output_meta.update({
-        'dtype': 'float32',
-        'nodata': -9999,
-        'compress': 'deflate'
-        })
+        wtd_2d = wtd_predicted.reshape(height, width)
 
-    # Write to file
-    with rasterio.open(output_path, 'w', **output_meta) as dst:
-        dst.write(wtd_2d. astype('float32'), 1)
+        # Copy metadata from DEM.
+        output_meta = dem.meta.copy()
+
+        # Update metadata for predictions.
+        output_meta.update({
+            'dtype': 'float32',
+            'nodata': -9999,
+            'compress': 'deflate'
+            })
+
+        # Write to file
+        with rasterio.open(output_path, 'w', **output_meta) as dst:
+            dst.write(wtd_2d. astype('float32'), 1)
