@@ -1,0 +1,60 @@
+# environment.yml
+# Conda environment for hydrodepthml
+#
+# Usage:
+#   conda env create -f environment.yml
+#   conda activate hydrodepthml
+#
+# To update an existing environment:
+#   conda env update -f environment.yml --prune
+
+name: hydrodepthml
+
+channels:
+  - conda-forge
+  - defaults
+
+dependencies:
+  # Python version
+  - python=3.11
+
+  # Core scientific computing
+  - numpy
+  - pandas
+  - scipy
+  - numba
+
+  # Visualization
+  - matplotlib
+
+  # Geospatial libraries (critical - includes GDAL)
+  - gdal
+  - rasterio
+  - geopandas
+  - shapely
+
+  # Image processing
+  - scikit-image
+
+  # Machine learning
+  - xgboost
+  - scikit-learn
+
+  # Data I/O and file formats
+  - h5py
+  - pytables
+  - openpyxl
+
+  # NASA EarthData access
+  - earthaccess
+  - keyring
+
+  # Web scraping and data download
+  - requests
+  - beautifulsoup4
+
+  # Pip-installable packages
+  - pip
+  - pip:
+      - whitebox
+      - appconfigs
