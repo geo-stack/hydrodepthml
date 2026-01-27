@@ -98,7 +98,9 @@ Understanding this workflow will help you:
 - Determine the order in which to run the processing steps
 - Understand dependencies between different data processing stages
 
-![Workflow Flowchart](docs/chart_scripts_usage.drawio.svg)
+<p align="center">
+  <img src="docs/chart_scripts_usage.drawio.svg" alt="Workflow Diagram" width="95%">
+</p>
 
 ## 5. Acknowledgements
 
