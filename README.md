@@ -132,6 +132,8 @@ To partition the study area into manageable spatial units, the workflow uses a *
 - Size: 5000 × 5000 pixels at 30m resolution (150 km × 150 km)
 - Overlap: 100 pixels (3 km) to ensure seamless feature extraction across boundaries
 - Consistent spatial indexing enables efficient parallel processing
+- **Processing time:** ~15-20 minutes per tile on a typical personal computer (for feature extraction and prediction)
+
 
 The map below illustrates the complete tile grid structure across Africa. White/transparent cells represent valid prediction tiles that intersect
 the African landmass, while red cells highlight tiles containing actual groundwater observations used for model training.
