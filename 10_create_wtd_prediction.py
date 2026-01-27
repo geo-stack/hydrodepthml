@@ -13,6 +13,7 @@
 import ast
 from datetime import datetime
 import pickle
+from time import perf_counter
 
 # ---- Third party imports
 import numpy as np
@@ -244,19 +245,19 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
     tif_path = tiles_cropped_dir / name / tile_name
 
     df['hybas_id'] = raster_to_flat_array(
-        tif_path, band=1, nodata_to_nan=False)
+        tif_path, band=1, nodata_to_nan=False
+        ).astype('float64')
+    df.loc[df['hybas_id'] == 0, 'hybas_id'] = np.nan
 
     print(f'{progress} Calculating distances and ratios '
           f'for tile {tile_index}...')
 
     df['dist_stream'] = (
-        (df.point_x - df.stream_x)**2 +
-        (df.point_y - df.stream_y)**2
+        (df.point_x - df.stream_x)**2 + (df.point_y - df.stream_y)**2
         )**0.5
 
     df['dist_top'] = (
-        (df.point_x - df.ridge_x)**2 +
-        (df.point_y - df.ridge_y)**2
+        (df.point_x - df.ridge_x)**2 + (df.point_y - df.ridge_y)**2
         )**0.5
 
     df['ratio_dist'] = (
@@ -287,12 +288,13 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
     hybas_ids = np.unique(df.hybas_id)
 
     for i, hybas_id in enumerate(hybas_ids):
-        if hybas_id == 0:
-            mask = (df.hybas_id == 0)
+        if pd.isnull(hybas_id):
+            mask = pd.isnull(df.hybas_id)
             df.loc[mask, 'ndvi'] = np.nan
             df.loc[mask, 'precipitation'] = np.nan
             continue
 
+        hybas_id = int(hybas_id)
         mask = (df.hybas_id == hybas_id)
 
         basins_data = basins_gdf.loc[hybas_id]
@@ -316,8 +318,10 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
 
     df.to_hdf(h5_path, key='data', mode='w')
 
+    del df
 
-# %%
+
+# %% Predict water depth
 
 # Load the model.
 with open(MODEL_PATH, 'rb') as f:
@@ -338,37 +342,51 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
     else:
         progress = f"[{tile_count}/{total_tiles}]"
 
-    # Load spatially distributed features data.
+    print(f'{progress} Predict WTD for tile {tile_index}...')
 
+    t0 = perf_counter()
+
+    # Load spatially distributed features data.
     h5_path = PREDICT_PATH / f"predict_dset_tile_{ty:03d}_{tx:03d}.h5"
     df = pd.read_hdf(h5_path, key='data')
-    X = df.loc[:, features].values
 
     # Predict water table depth for the whole tile.
-    wtd_predicted = model.predict(X)
+    nanmask = df.isnull().any(axis=1)
+
+    wtd_predicted = np.full(len(df), np.nan, dtype='float32')
+    wtd_predicted[~nanmask] = model.predict(df.loc[~nanmask, features])
 
     # Save results.
     dem_path = (
-        tiles_cropped_dir / "dem_cond" / "dem_cond_tile_{ty:03d}_{tx:03d}.tif"
+        tiles_cropped_dir / "dem_cond" / f"dem_cond_tile_{ty:03d}_{tx:03d}.tif"
         )
-    output_path = PREDICT_PATH / 'pred_wtd_tile_{ty:03d}_{tx:03d}.tif'
+    output_path = PREDICT_PATH / f'pred_wtd_tile_{ty:03d}_{tx:03d}.tif'
 
     with rasterio.open(dem_path) as dem:
         # Reshape 1D predictions to 2D grid
         height, width = dem.height, dem.width
 
-        wtd_2d = wtd_predicted.reshape(height, width)
+        nodata = dem.nodata
 
         # Copy metadata from DEM.
         output_meta = dem.meta.copy()
 
-        # Update metadata for predictions.
-        output_meta.update({
-            'dtype': 'float32',
-            'nodata': -9999,
-            'compress': 'deflate'
-            })
+    wtd_predicted[np.isnan(wtd_predicted)] = -9999
+    wtd_2d = wtd_predicted.reshape(height, width)
 
-        # Write to file
-        with rasterio.open(output_path, 'w', **output_meta) as dst:
-            dst.write(wtd_2d. astype('float32'), 1)
+    # Update metadata for predictions.
+    output_meta.update({
+        'dtype': 'float32',
+        'nodata': -9999,
+        'compress': 'deflate'
+        })
+
+    # Write to file
+    with rasterio.open(output_path, 'w', **output_meta) as dst:
+        dst.write(wtd_2d. astype('float32'), 1)
+
+    del wtd_predicted
+    del wtd_2d
+
+    t1 = perf_counter()
+    print(f' done in {round(t1 - t0):0.0f} sec')
