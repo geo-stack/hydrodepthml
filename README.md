@@ -88,7 +88,19 @@ These instructions use graphical interfaces (Anaconda Navigator and GitHub Deskt
 - **NASADEM DEM** is required for running predictions or training models (run `04_process_dem_data.py`)
 - *MODIS NDVI and CHIRPS data are optional if using pre-processed files included in the repository
 
-## 4. Acknowledgements
+## 4. Workflow Overview
+
+The hydrodepthml project consists of multiple processing scripts that work together to download, process, and model groundwater depth data.
+The flowchart below illustrates the complete workflow, showing which scripts to run in sequence and how the data flows through the pipeline.
+
+Understanding this workflow will help you:
+- Identify which scripts are necessary for your specific use case
+- Determine the order in which to run the processing steps
+- Understand dependencies between different data processing stages
+
+![Workflow Flowchart](docs/chart_scripts_usage.drawio.svg)
+
+## 5. Acknowledgements
 
 This project was developed by Les solutions géostack, Inc. as part of a research initiative for The World Bank Group.  
 For inquiries, contact: info@geostack.ca
