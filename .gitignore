@@ -9,6 +9,7 @@ data/precip/*
 data/topo/*
 data/*
 asiz/*
+old/*
 references/
 
 # Byte-compiled / optimized / DLL files
