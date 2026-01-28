@@ -18,12 +18,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import (
-    RandomizedSearchCV, LeaveOneGroupOut, GridSearchCV)
 
 # ---- Local imports
 from hdml import __datadir__ as datadir
-from hdml.modeling import perform_cross_validation, plot_pred_vs_obs
+from hdml.modeling import plot_pred_vs_obs
 
 model_path = datadir / 'model' / 'wtd_predict_model.pkl'
 
@@ -41,12 +39,12 @@ df = pd.read_csv(wtd_path)
 df = df.dropna()
 
 features = [
-    'ratio_dist',
-    'ratio_stream',
     'dist_stream',
-    'alt_stream',
     'dist_top',
+    'ratio_dist',
+    'alt_stream',
     'alt_top',
+    'ratio_stream',
     'long_hessian_max',
     'long_hessian_mean',
     'long_hessian_var',
@@ -64,20 +62,6 @@ features = [
     'ndvi',
     'precipitation',
     ]
-
-# %%
-import seaborn as sns
-
-corr_matrix = df[features].corr()
-
-fig, ax = plt.subplots(figsize=(14, 10))
-sns.set_theme(style="ticks", font_scale=0.8)
-sns.heatmap(
-    corr_matrix, annot=True, cmap='coolwarm',
-    ax=ax, cbar=False, annot_kws={"fontsize": 8})
-fig.suptitle('Matrice de Corrélation')
-fig.tight_layout()
-plt.show()
 
 
 # %%
