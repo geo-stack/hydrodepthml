@@ -135,6 +135,7 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
         ridge_size=30,
         )
 
+
 # %%
 
 # Extract topo-derived features from the pre-processed tiles.
@@ -186,6 +187,15 @@ for tile_idx, group in joined.groupby('tile_index'):
         gwl_gdf.loc[group.index, 'ridge_x'] = values[:, 2]
         gwl_gdf.loc[group.index, 'ridge_y'] = values[:, 3]
         gwl_gdf.loc[group.index, 'ridge_z'] = values[:, 4]
+
+    name = 'wetness_index'
+    tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
+    tif_path = tiles_cropped_dir / name / tile_name
+    with rasterio.open(tif_path) as src:
+        values = np.array(list(src.sample(coords)))
+        values[values == src.nodata] = np.nan
+
+        gwl_gdf.loc[group.index, 'wetness_index'] = values[:, 0]
 
     band_index_map = {
         'min': 0,
