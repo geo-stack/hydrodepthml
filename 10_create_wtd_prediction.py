@@ -9,6 +9,78 @@
 # Repository: https://github.com/geo-stack/hydrodepthml
 # =============================================================================
 
+"""
+Generate water table depth predictions for a custom geographic area.
+
+This script performs the following tasks:
+
+1. Filters spatial tiles that intersect a user-defined bounding box
+2. Generates topographic features (slope, TWI, stream/ridge distances, etc.)
+   for each selected tile
+3. Rasterizes HydroBASINS IDs onto the tile grid for basin-level calculations
+4. Extracts pixel-level features from all raster layers into tabular format
+5. Calculates NDVI and precipitation averages for the recharge period based
+   on basin area
+6. Loads a trained machine learning model and generates water table depth
+   predictions for all pixels
+7. Exports predictions as GeoTIFF rasters (one per tile)
+
+Configuration
+-------------
+Before running this script, edit the following parameters at the top:
+
+- **LAT_MIN, LAT_MAX, LON_MIN, LON_MAX**: Geographic extent (EPSG:4326) for
+  the prediction area, in decimal degrees.
+- **REF_DATE**: Reference date for calculating NDVI and precipitation averages
+  (must be between 2025-01-01 and 2025-12-31)
+- **MODEL_PATH**: Path to the trained model.
+
+Requirements
+------------
+- NASADEM DEM virtual raster (ESRI:102022) (see '04_process_dem_data.py')
+- HydroBASINS Level 12 averaged NDVI data (see '05_process_ndvi_data.py')
+- HydroBASINS Level 12 averaged precip data (see '06_process_precip_data.py')
+- Spatial tiles covering Africa (see '07_create_spatial_grid.py')
+- Trained ML model (see '08_create_ml_model.py')
+
+Storage Requirements
+--------------------
+- Topographic features: ~5 GB per tile (temporary, can be reused)
+- Prediction datasets (HDF5): ~4.2 GB per tile (temporary, can be reused)
+- Output prediction rasters: ~15 MB per tile (GeoTIFF with compression)
+- **Total per tile**: 9.2 GB
+
+Processing Time
+---------------
+- Feature extraction: ~10-15 minutes per tile (on personal computer)
+- Prediction: ~2-5 minutes per tile
+- **Total**: ~15-20 minutes per tile
+
+Outputs
+-------
+- 'predict/predict_dset_tile_{ty:03d}_{tx:03d}.h5':
+      Pixel-level feature dataset for each tile (HDF5 format)
+- 'predict/pred_wtd_tile_{ty:03d}_{tx:03d}.tif':
+      Predicted water table depth raster (GeoTIFF, ESRI:102022)
+- 'features/tiles (cropped)/': Topographic feature rasters for each tile
+- 'features/tiles (overlapped)/': Extended tiles used for edge processing
+
+Note that all paths are relative to the repository's 'data/' directory
+(e.g., if cloned to 'C:/Users/User/Documents/hydrodepthml/', outputs are in
+'C:/Users/User/Documents/hydrodepthml/data/predict/').
+
+Notes
+-----
+- Predictions use the same tiling grid as training (150 km × 150 km tiles)
+- Previously processed tiles are automatically skipped (enables resuming)
+- Pixels with missing data (NaN values) are excluded from predictions
+- The recharge period (for NDVI/precip averaging) is calculated dynamically
+  based on basin area using the formula from 'wtd_helpers.py'
+- Output rasters use -9999 as NoData value
+- All spatial operations are performed in ESRI:102022 projection
+"""
+
+
 # ---- Standard imports
 import ast
 from datetime import datetime
@@ -49,7 +121,7 @@ PREDICT_PATH.mkdir(parents=True, exist_ok=True)
 MODEL_PATH = datadir / 'model' / 'wtd_predict_model.pkl'
 
 
-# %%
+# %% Load data
 
 if not MODEL_PATH.exists():
     raise FileNotFoundError(
@@ -98,7 +170,7 @@ tiles_overlap_dir.mkdir(parents=True, exist_ok=True)
 tiles_cropped_dir = datadir / 'features' / 'tiles (cropped)'
 tiles_cropped_dir.mkdir(parents=True, exist_ok=True)
 
-# %%
+# %% Generate topo features
 
 # Generate topography-derived features for prediction tiles.
 # Previously generated tiles (from training or prediction runs) are skipped.
@@ -127,7 +199,7 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
         )
 
 
-# %%
+# %% Rasterize basin IDs
 
 # Rasterize basin IDs onto the tile grid for fast pixel-to-basin lookup.
 # Previously generated tiles (from training or prediction runs) are skipped.
@@ -166,7 +238,7 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
         output_path=output_dir / tile_name
         )
 
-# %% Extract pixels to DataFrame
+# %% Extract pixels (from raster) to DataFrame
 
 tile_count = 0
 for _, tile_bbox_data in tiles_gdf.iterrows():
@@ -334,6 +406,9 @@ with open(MODEL_PATH, 'rb') as f:
 tile_count = 0
 for _, tile_bbox_data in tiles_gdf.iterrows():
     tile_count += 1
+
+    tile_index = tile_bbox_data.tile_index
+    ty, tx = ast.literal_eval(tile_index)
 
     if total_tiles >= 100:
         progress = f"[{tile_count:03d}/{total_tiles}]"
