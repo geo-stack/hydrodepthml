@@ -653,7 +653,8 @@ def generate_topo_features_for_tile(
         'geomorphons', 'ridges', 'nearest_ridge_coords',
         'long_hessian_stats', 'long_grad_stats',
         'short_grad_stats',
-        'stream_grad_stats', 'stream_hessian_stats'
+        'stream_grad_stats', 'stream_hessian_stats',
+        'wetness_index',
         ]
 
     wbt = whitebox.WhiteboxTools()
@@ -795,6 +796,11 @@ def generate_topo_features_for_tile(
             'kwargs': {'raster': tile_paths['curvature'],
                        'dist_stream': tile_paths['nearest_stream_coords'],
                        'fisher': False}
+            },
+        'wetness_index': {
+            'func': wbt.wetness_index,
+            'kwargs': {'sca': tile_paths['flow_accum'],
+                       'slope': tile_paths['slope']}
             },
         }
 
