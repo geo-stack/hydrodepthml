@@ -86,7 +86,7 @@ def perform_cross_validation(
         Cl = Regressor(**model_kwargs)
         Cl.fit(Xtrain, ytrain)
         yeval = Cl.predict(Xtest)
-        predicdf.loc[ytest.index, 'NS'] = yeval
+        predicdf.loc[ytest.index, 'NS_predict'] = yeval
 
         importances.append({
             varlist[f]: Cl.feature_importances_[f] for
