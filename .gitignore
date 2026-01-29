@@ -7,7 +7,13 @@ data/climate_zones/*
 data/ndvi/*
 data/precip/*
 data/topo/*
-data/*
+data/features/*
+data/gadm/*
+data/pixels/*
+data/wtd/*
+data/predict/*
+data/coastline/*
+data/basins/*
 asiz/*
 old/*
 references/
