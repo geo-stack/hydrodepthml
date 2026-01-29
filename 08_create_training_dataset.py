@@ -257,6 +257,10 @@ gwl_gdf['ratio_stream'] = (
     gwl_gdf['alt_stream'] / np.maximum(gwl_gdf['dist_stream'], pixel_size)
     )
 
+gwl_gdf['stream_to_total_dist_ratio'] = (
+    gwl_gdf.dist_stream / (gwl_gdf.dist_top + gwl_gdf.dist_stream)
+    )
+
 
 # %%
 
