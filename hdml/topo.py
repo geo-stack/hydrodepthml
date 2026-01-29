@@ -716,7 +716,7 @@ def generate_topo_features_for_tile(
         'dem_smooth': {
             'func': wbt.gaussian_filter,
             'kwargs': {'i': tile_paths['dem'],
-                       'sigma': 1.0}
+                       'sigma': gaussian_filter_sigma}
             },
         'dem_cond': {
             'func': wbt.fill_depressions,
