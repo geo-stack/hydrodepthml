@@ -11,7 +11,6 @@
 
 # ---- Standard imports
 from datetime import datetime
-import pickle
 
 # ---- Third party imports
 import matplotlib.pyplot as plt
@@ -26,11 +25,8 @@ import xgboost as xgb
 
 # ---- Local imports
 from hdml import __datadir__ as datadir
-from hdml.modeling import perform_cross_validation, plot_pred_vs_obs
+from hdml.modeling import plot_pred_vs_obs
 from hdml.ml_helpers import plot_feature_importance
-
-model_path = datadir / 'model' / 'wtd_predict_model.pkl'
-
 
 wtd_path = datadir / 'model' / "wtd_obs_training_dataset.csv"
 if not wtd_path.exists():
@@ -48,7 +44,7 @@ features = [
     'dist_stream',
     # 'dist_top',
     # 'ratio_dist',
-    'alt_stream',           # point_z - stream_z
+    'alt_stream',             # point_z - stream_z
     # 'alt_top',              # ridge_z - point_z
     # 'ratio_stream',         # (point_z - stream_z) / dist_stream
     # 'long_hessian_max',
