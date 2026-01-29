@@ -40,6 +40,13 @@ if not wtd_path.exists():
 df = pd.read_csv(wtd_path)
 df = df.dropna()
 
+# grad -> slope
+# hessian -> first derivative of the slope
+
+# short -> stats over 7 pixels window == 210 m -> halfwidth de 105 m
+# long -> stats over 41 pixels window = 1230 m -> halfwidth = 615 m
+# stream -> stats along the line between point and nearest stream
+
 features = [
     'dist_stream',
     # 'dist_top',
@@ -63,12 +70,12 @@ features = [
     # 'stream_hessian_max',
     'ndvi',
     'precipitation',
-    'pre_mm_syr',
-    'tmp_dc_syr',
-    'pet_mm_syr',
-    # 'stream_to_total_dist_ratio',
+    'pre_mm_syr',  # average annual precipitation for sub-bassin
+    'tmp_dc_syr',  # average annual air temperature for sub-bassin
+    'pet_mm_syr',  # average annual potential evapotranspiration for sub-bassin
+    # 'stream_to_total_dist_ratio',  # dist_stream / (dist_stream + dist_top)
     'wetness_index',
-    'point_z'
+    'point_z'      # Elevation of pixel
     ]
 
 
@@ -83,7 +90,7 @@ mean = np.mean(depths)
 # high_cutoff = mean + std
 
 # Percentile-based boundaries
-low_cutoff = np.percentile(depths, 15)   # 10th percentile, e.g.
+low_cutoff = np.percentile(depths, 15)   # 10th percentile
 high_cutoff = np.percentile(depths, 85)  # 90th percentile
 
 df.loc[depths <= low_cutoff, 'NS_bin'] = 'shallow'
