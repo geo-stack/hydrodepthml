@@ -759,10 +759,7 @@ def generate_topo_features_for_tile(
         'ridges': {
             'func': extract_ridges,
             'kwargs': {'geomorphons': tile_paths['geomorphons'],
-                       'ridge_size': ridge_size,
-                       # 'flow_acc': tile_paths['flow_accum'],
-                       # 'max_flow_acc': 2
-                       }
+                       'ridge_size': ridge_size}
 
             },
         'nearest_ridge_coords': {
