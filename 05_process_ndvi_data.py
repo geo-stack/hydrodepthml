@@ -63,7 +63,7 @@ mosaics are produced to recover ~1.24 TB of disk space.
 Data Source
 -----------
 MODIS MOD13Q1 Version 6.1 (Terra satellite, 250m resolution, 16-day composite)
-Documentation: https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod13q1-006
+Documentation: https://www.earthdata.nasa.gov/data/catalog/lpcloud-mod13q1-061
 Coverage: 2000–present (Terra launch:  late 1999).
 
 Outputs
