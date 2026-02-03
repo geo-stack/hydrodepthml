@@ -107,6 +107,8 @@ tiles_cropped_dir.mkdir(parents=True, exist_ok=True)
 model_dir = datadir / 'model'
 model_dir.mkdir(parents=True, exist_ok=True)
 
+OUTPUT_FILE = model_dir / "wtd_obs_training_dataset_sig4.csv"
+
 # %%
 
 # Generate the topo-derived features for all tiles containing at least
@@ -131,7 +133,7 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
         ovlp_tile_dir=tiles_overlap_dir,
         print_affix=progress,
         extract_streams_treshold=500,
-        gaussian_filter_sigma=1,
+        gaussian_filter_sigma=4,
         ridge_size=30,
         )
 
@@ -292,4 +294,4 @@ for index, row in gwl_gdf.iterrows():
 
 
 print("Saving dataset to file...")
-gwl_gdf.to_csv(model_dir / "wtd_obs_training_dataset.csv")
+gwl_gdf.to_csv(OUTPUT_FILE)
