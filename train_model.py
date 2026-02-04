@@ -16,7 +16,8 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegressor
+from sklearn.neighbors import KNeighborsRegressor
 from sklearn.model_selection import (
     RandomizedSearchCV, LeaveOneGroupOut, GridSearchCV)
 from matplotlib.transforms import ScaledTranslation
@@ -28,12 +29,13 @@ from hdml import __datadir__ as datadir
 from hdml.modeling import plot_pred_vs_obs
 from hdml.ml_helpers import plot_feature_importance
 
-wtd_path = datadir / 'model' / "wtd_obs_training_dataset.csv"
+wtd_path = datadir / 'model' / "wtd_obs_training_dataset_sig4.csv"
 if not wtd_path.exists():
     raise FileNotFoundError(
         "Make sure to run 'create_training_dataset.py' before running this "
         "script generate the 'wtd_obs_training_dataset.csv'."
         )
+
 
 # %%
 
@@ -49,33 +51,33 @@ df = df.dropna()
 
 features = [
     'dist_stream',
-    # 'dist_top',
+    'dist_top',
     # 'ratio_dist',
     'alt_stream',             # point_z - stream_z
     # 'alt_top',              # ridge_z - point_z
-    # 'ratio_stream',         # (point_z - stream_z) / dist_stream
-    # 'long_hessian_max',
+    'ratio_stream',         # (point_z - stream_z) / dist_stream
+    'long_hessian_max',
     'long_hessian_mean',
-    # 'long_hessian_var',
-    # 'long_hessian_skew',
-    # 'long_hessian_kurt',
+    'long_hessian_var',
+    'long_hessian_skew',
+    'long_hessian_kurt',
     'long_grad_mean',
     'long_grad_var',
-    # 'short_grad_max',
+    'short_grad_max',
     'short_grad_var',
     'short_grad_mean',
-    # 'stream_grad_max',
-    # 'stream_grad_var',
-    # 'stream_grad_mean',
-    # 'stream_hessian_max',
+    'stream_grad_max',
+    'stream_grad_var',
+    'stream_grad_mean',
+    'stream_hessian_max',
     'ndvi',
     'precipitation',
     'pre_mm_syr',  # average annual precipitation for sub-bassin
     'tmp_dc_syr',  # average annual air temperature for sub-bassin
     'pet_mm_syr',  # average annual potential evapotranspiration for sub-bassin
-    # 'stream_to_total_dist_ratio',  # dist_stream / (dist_stream + dist_top)
+    'stream_to_total_dist_ratio',  # dist_stream / (dist_stream + dist_top)
     'wetness_index',
-    'point_z'      # Elevation of pixel
+    # 'point_z'      # Elevation of pixel
     ]
 
 
@@ -90,8 +92,8 @@ mean = np.mean(depths)
 # high_cutoff = mean + std
 
 # Percentile-based boundaries
-low_cutoff = np.percentile(depths, 15)   # 10th percentile
-high_cutoff = np.percentile(depths, 85)  # 90th percentile
+low_cutoff = np.percentile(depths, 5)   # 10th percentile
+high_cutoff = np.percentile(depths, 70)  # 90th percentile
 
 df.loc[depths <= low_cutoff, 'NS_bin'] = 'shallow'
 df.loc[depths >= high_cutoff, 'NS_bin'] = 'deep'
@@ -167,6 +169,7 @@ index_to_keep = pd.Index(df_middle.index[:n_middle])
 index_to_keep = index_to_keep.append(df.index[mask])
 
 df_resample = df.loc[index_to_keep]
+df_resample = df.copy()
 
 # %%
 
@@ -232,7 +235,41 @@ plt.show()
 
 
 # %%
-from sklearn.preprocessing import StandardScaler, RobustScaler
+# features_to_plot = [
+#     'dist_stream',
+#     # 'dist_top',
+#     # 'ratio_dist',
+#     'alt_stream',             # point_z - stream_z
+#     # 'alt_top',              # ridge_z - point_z
+#     # 'ratio_stream',         # (point_z - stream_z) / dist_stream
+#     # 'long_hessian_max',
+#     # 'long_hessian_mean',
+#     # 'long_hessian_var',
+#     # 'long_hessian_skew',
+#     # 'long_hessian_kurt',
+#     # 'long_grad_mean',
+#     # 'long_grad_var',
+#     # 'short_grad_max',
+#     # 'short_grad_var',
+#     # 'short_grad_mean',
+#     # 'stream_grad_max',
+#     # 'stream_grad_var',
+#     # 'stream_grad_mean',
+#     # 'stream_hessian_max',
+#     'ndvi',
+#     'precipitation',
+#     'pre_mm_syr',  # average annual precipitation for sub-bassin
+#     'tmp_dc_syr',  # average annual air temperature for sub-bassin
+#     'pet_mm_syr',  # average annual potential evapotranspiration for sub-bassin
+#     'stream_to_total_dist_ratio',  # dist_stream / (dist_stream + dist_top)
+#     'wetness_index',
+#     # 'point_z'      # Elevation of pixel
+#     'NS'
+#     ]
+
+# sns.pairplot(df_resample.loc[:, features_to_plot], hue='NS')
+# %%
+from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 
 plt.close('all')
 
@@ -240,8 +277,11 @@ plt.close('all')
 test_country = 'Mali'
 
 
-train_index = df_resample[df_resample.country != test_country].index
-test_index = df_resample[df_resample.country == test_country].index
+train_index = df_resample[(df_resample.country == test_country)& (df_resample.LAT<11.5)].index
+test_index = df_resample[(df_resample.country == test_country) & (df_resample.LAT>11.5)].index
+
+# train_index = df_resample[(df_resample.country != test_country)].index
+# test_index = df_resample[(df_resample.country == test_country)].index
 
 df_train = df_resample.loc[train_index]
 df_test = df_resample.loc[test_index]
@@ -253,38 +293,49 @@ fig2.tight_layout()
 
 
 X_train = df_resample.loc[train_index, features].values
-y_train = df_resample.loc[train_index, 'NS'].values
+y_train = (df_resample.loc[train_index, 'point_z'].values - 
+           df_resample.loc[train_index, 'NS'].values)
 
 
 X_test = df_resample.loc[test_index, features].values
-y_test = df_resample.loc[test_index, 'NS'].values
+y_test = df_resample.loc[test_index, 'point_z'].values - df_resample.loc[test_index, 'NS'].values
 
 # ss = StandardScaler()
 # X_train = ss.fit_transform(X_train)
 # X_test = ss.transform(X_test)
 
-params = {
-    'random_state': 42,
-    'n_estimators': 100,
-    # 'max_depth': 10,
-    # 'subsample': 0.3,
-    # 'gamma': 1,
-    # 'colsample_bytree': 1,
-    # 'reg_alpha': 0,
-    # 'reg_lambda': 6,
-    # 'learning_rate': 0.25
-    }
+# params = {
+#     'random_state': 42,
+#     'n_estimators': 100,
+#     # 'max_depth': 10,
+#     # 'subsample': 0.3,
+#     # 'gamma': 1,
+#     # 'colsample_bytree': 1,
+#     # 'reg_alpha': 0,
+#     # 'reg_lambda': 6,
+#     # 'learning_rate': 0.25
+#     }
 
-params = {'subsample': 1.0, 'reg_lambda': 1.5, 'reg_alpha': 0, 'n_estimators': 500, 'max_depth': 4, 'learning_rate': 0.01, 'gamma': 1, 'colsample_bytree': 0.8}
+params = {'subsample': 0.6,
+          'reg_lambda': 2.5,
+          'reg_alpha': 1.5,
+          'n_estimators': 1000,
+          'max_depth': 4,
+          'learning_rate': 0.03,
+          'gamma': 0.1,
+          'colsample_bytree': 0.7}
 
 Cl = xgb_model = xgb.XGBRegressor(**params)
+# Cl = HistGradientBoostingRegressor(max_depth=3, loss='gamma', quantile=0.75)
+# Cl = KNeighborsRegressor(n_neighbors=5)
+# Cl = RandomForestRegressor(max_depth=4, n_estimators=1000)
 Cl.fit(X_train, y_train)
 
-fig3 = plot_feature_importance(Cl.feature_importances_, features)
+# fig3 = plot_feature_importance(Cl.feature_importances_, features)
 
 y_eval = Cl.predict(X_test)
 classes = np.full(len(y_test), f'{test_country}')
-axis = {'xmin': 0, 'xmax': 30, 'ymin': 0, 'ymax': 30}
+axis = {'xmin': 300, 'xmax': 400, 'ymin': 300, 'ymax': 400}
 fig4 = plot_pred_vs_obs(
     y_test, y_eval, classes, axis=axis,
     suptitle='True vs Predicted values',
@@ -300,7 +351,22 @@ fig5 = plot_pred_vs_obs(
     plot_stats=True
     )
 
+
 # %%
+from sklearn.feature_selection import SequentialFeatureSelector
+
+knn = KNeighborsRegressor(n_neighbors=10)
+
+# Sélectionner les 3 meilleures caractéristiques en partant de la totalité (Backward)
+sfs = SequentialFeatureSelector(knn, n_features_to_select=10, direction='backward')
+
+sfs.fit(X_train, y_train)
+
+print("\nLes 5 caractéristiques retenues par SBS :")
+# On récupère les indices des colonnes sélectionnées
+selected_features = np.array(features)[sfs.get_support()]
+print(selected_features)    
+# %%10
 
 point = df.loc[df.ID == 'KR-0432-F']
 
@@ -309,8 +375,8 @@ point = df.loc[df.ID == 'KR-0432-F']
 # Hyperparameter optimization (RandomizedSearchCV).
 
 params_grid = {
-    'n_estimators': [100, 300, 500, 700, 900],
-    'max_depth': [3, 4, 5, 6, 7, 8, 9, 10],
+    'n_estimators': [100, 500, 1000, 3000],
+    'max_depth': [3, 5, 7, 10],
     'learning_rate': [0.01, 0.05, 0.1, 0.2],
     'subsample': [0.6, 0.7, 0.8, 0.9, 1.0],
     'colsample_bytree': [0.6, 0.7, 0.8, 0.9, 1.0],
@@ -324,7 +390,7 @@ logo = LeaveOneGroupOut()
 random_search = RandomizedSearchCV(
     estimator=xgb_model,
     param_distributions=params_grid,
-    n_iter=100,
+    n_iter=1000,
     scoring='neg_mean_squared_error',
     cv=logo,
     verbose=2,
@@ -362,7 +428,7 @@ params_grid = {
 grid_search = GridSearchCV(
     estimator=Cl,
     param_grid=params_grid,
-    scoring='neg_mean_squared_error',
+    scoring='precision_weighted',
     # cv=LeaveOneGroupOut(),
     verbose=2,
     n_jobs=-1
