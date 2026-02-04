@@ -159,6 +159,15 @@ for tile_idx, group in joined.groupby('tile_index'):
     coords = [(geom.x, geom.y) for geom in group.geometry]
     ty, tx = ast.literal_eval(tile_idx)
 
+    name = 'dem'
+    tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
+    tif_path = tiles_cropped_dir / name / tile_name
+    with rasterio.open(tif_path) as src:
+        values = np.array(list(src.sample(coords)))
+        values[values == src.nodata] = np.nan
+
+        gwl_gdf.loc[group.index, 'elev'] = values[:, 0]
+
     name = 'dem_cond'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
     tif_path = tiles_cropped_dir / name / tile_name
