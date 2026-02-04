@@ -207,6 +207,17 @@ for tile_idx, group in joined.groupby('tile_index'):
         gwl_gdf.loc[group.index, 'ridge_y'] = values[:, 3]
         gwl_gdf.loc[group.index, 'ridge_z'] = values[:, 4]
 
+    name = 'nearest_divide_coords'
+    tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
+    tif_path = tiles_cropped_dir / name / tile_name
+    with rasterio.open(tif_path) as src:
+        values = np.array(list(src.sample(coords)))
+        values[values == src.nodata] = np.nan
+
+        gwl_gdf.loc[group.index, 'divide_x'] = values[:, 2]
+        gwl_gdf.loc[group.index, 'divide_y'] = values[:, 3]
+        gwl_gdf.loc[group.index, 'divide_z'] = values[:, 4]
+
     name = 'wetness_index'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
     tif_path = tiles_cropped_dir / name / tile_name
@@ -264,6 +275,11 @@ gwl_gdf['dist_top'] = (
     (gwl_gdf.point_y - gwl_gdf.ridge_y)**2
     )**0.5
 
+gwl_gdf['dist_divide'] = (
+    (gwl_gdf.point_x - gwl_gdf.divide_x)**2 +
+    (gwl_gdf.point_y - gwl_gdf.divide_y)**2
+    )**0.5
+
 gwl_gdf['ratio_dist'] = (
     gwl_gdf.dist_stream / (np.maximum(gwl_gdf.dist_top, pixel_size))
     )
@@ -272,12 +288,14 @@ gwl_gdf['alt_stream'] = gwl_gdf.point_z - gwl_gdf.stream_z
 
 gwl_gdf['alt_top'] = gwl_gdf.ridge_z - gwl_gdf.point_z
 
+gwl_gdf['alt_divide'] = gwl_gdf.divide_z - gwl_gdf.point_z
+
 gwl_gdf['ratio_stream'] = (
     gwl_gdf['alt_stream'] / np.maximum(gwl_gdf['dist_stream'], pixel_size)
     )
 
-gwl_gdf['stream_to_total_dist_ratio'] = (
-    gwl_gdf.dist_stream / (gwl_gdf.dist_top + gwl_gdf.dist_stream)
+gwl_gdf['ratio_stream_divide'] = (
+    gwl_gdf.dist_stream / (gwl_gdf.dist_divide + gwl_gdf.dist_stream)
     )
 
 
