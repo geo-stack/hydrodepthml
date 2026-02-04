@@ -75,9 +75,13 @@ features = [
     'pre_mm_syr',  # average annual precipitation for sub-bassin
     'tmp_dc_syr',  # average annual air temperature for sub-bassin
     'pet_mm_syr',  # average annual potential evapotranspiration for sub-bassin
-    'stream_to_total_dist_ratio',  # dist_stream / (dist_stream + dist_top)
     'wetness_index',
-    # 'point_z'      # Elevation of pixel
+    # 'point_z',      # Elevation of pixel
+    'ndvi_yrly_avg',
+    'precip_yrly_avg',
+    'dist_divide',
+    'alt_divide',
+    'ratio_stream_divide'  # dist_stream / (dist_divide + dist_stream)
     ]
 
 
