@@ -604,6 +604,184 @@ def stream_stats(
         dst.set_band_description(6, 'kurt')
 
 
+def extract_divides(subbassins: Path, output: Path):
+    """
+    Extract watershed divides from a subbasin classification raster.
+
+    Identifies pixels at boundaries between different subbasins by comparing
+    each valid cell with its four orthogonal neighbors (up, down, left, right).
+
+    A pixel is marked as a divide if:
+    - It borders a nodata cell (edge of valid DEM extent), OR
+    - It borders a cell with a different subbasin ID (inter-basin boundary)
+
+    Parameters
+    ----------
+    subbassins : Path
+        Path to subbasin classification GeoTIFF. Expected to contain integer
+        subbasin IDs from WhiteboxTools subbasins analysis, where each unique
+        positive integer represents a distinct drainage basin. Nodata values
+        indicate areas outside the analysis extent.
+    output : Path
+        Path for output binary divide raster. Output is uint8 with values:
+        - 1 = divide pixel (basin boundary)
+        - 0 = non-divide pixel (basin interior or nodata)
+        The output raster inherits CRS and resolution from the input.
+
+    Notes
+    -----
+    - Uses 4-connectivity (orthogonal neighbors only, no diagonals)
+    - Edge pixels are naturally handled by array slicing without wrapping
+    - Output is compressed using DEFLATE compression
+
+    References
+    ----------
+    WhiteboxTools Subbasins documentation:
+    https://www.whiteboxgeo.com/manual/wbt_book/available_tools/hydrological_analysis.html#Subbasins
+    """
+
+    with rasterio.open(subbassins) as src:
+        subbasin = src.read(1)
+        profile = src.profile.copy()
+        nodata = src.nodata
+
+    # Identify valid data cells.
+    is_valid = (subbasin != nodata)
+
+    # Create an empty mask for divides.
+    divide_mask = np.zeros_like(subbasin, dtype=bool)
+
+    # Compare with neighbors using slicing (no wrapping).
+
+    # Up neighbor.
+    divide_mask[1:, :] |= is_valid[1:, :] & (
+        (~is_valid[:-1, :]) |
+        (is_valid[:-1, :] & (subbasin[1:, :] != subbasin[:-1, :]))
+        )
+
+    # Down neighbor.
+    divide_mask[:-1, :] |= is_valid[:-1, :] & (
+        (~is_valid[1:, :]) |
+        (is_valid[1:, :] & (subbasin[:-1, :] != subbasin[1:, :]))
+        )
+
+    # Left neighbor.
+    divide_mask[:, 1:] |= is_valid[:, 1:] & (
+        (~is_valid[:, :-1]) |
+        (is_valid[:, :-1] & (subbasin[:, 1:] != subbasin[:, :-1]))
+        )
+
+    # Right neighbor.
+    divide_mask[:, :-1] |= is_valid[:, :-1] & (
+        (~is_valid[:, 1:]) |
+        (is_valid[:, 1:] & (subbasin[:, :-1] != subbasin[:, 1:]))
+        )
+
+    # Write output to file
+    profile.update(dtype='uint8', count=1, nodata=0, compress='deflate')
+    with rasterio.open(output, 'w', **profile) as dst:
+        dst.write(divide_mask.astype(np.uint8), 1)
+
+
+def nearest_divide_coords(dem: Path, divides: Path, output: Path):
+    """
+    Find the (x, y, z) coordinates and (row, col) indices of the nearest
+    water divide pixel for each cell of the DEM.
+
+    Parameters
+    ----------
+    dem : Path
+        Path to the Digital Elevation Model (DEM) GeoTIFF. Used for spatial
+        reference, nodata masking, and elevation values. DEM and divides
+        rasters must be aligned (same CRS, resolution, and extent).
+    divides : Path
+        Path to the divides raster GeoTIFF. Divide pixels are identified where
+        pixel values are positive (> 0). Must be aligned with the DEM.
+    output : Path
+        Path for the output 5-band GeoTIFF file.
+
+    Returns
+    -------
+    None
+        Writes a 5-band GeoTIFF:
+          1. Row index of nearest divide (float32)
+          2. Col index of nearest divide (float32)
+          3. x coordinate of nearest divide (float32)
+          4. y coordinate of nearest divide (float32)
+          5. z (elevation) of nearest divide (float32)
+    """
+    with rasterio.open(dem) as src:
+        dem_profile = src.profile.copy()
+        dem_data = src.read(1)
+        dem_nodata = src.nodata
+        nodata_mask = (dem_data == dem_nodata)
+
+    with rasterio.open(divides) as src:
+        divides_data = src.read(1)
+        divides_mask = divides_data > 0
+        transform = src.transform
+
+    if not divides_mask.any():
+        raise ValueError("No divide pixels found!")
+
+    # Get pixel spacing in map units for accurate distance calculation.
+    pixel_height = abs(transform.e)
+    pixel_width = abs(transform.a)
+
+    # Compute distances and indices of nearest divide pixel.
+    indices = distance_transform_edt(
+        ~divides_mask,
+        sampling=(pixel_height, pixel_width),
+        return_distances=False,
+        return_indices=True
+        )
+
+    # indices shape: (2, rows, cols)
+    # indices[0] = row index of nearest divide pixel
+    # indices[1] = col index of nearest divide pixel
+    nearest_rows = indices[0]
+    nearest_cols = indices[1]
+
+    # x and y coordinates of nearest divide pixel.
+    xs, ys = rasterio.transform.xy(
+        transform, nearest_rows.ravel(), nearest_cols.ravel(), offset='center'
+        )
+    xs = np.array(xs, dtype=np.float32).reshape(nearest_rows.shape)
+    ys = np.array(ys, dtype=np.float32).reshape(nearest_rows.shape)
+
+    # z (elevation) value at the location of the nearest divide pixel
+    z_divide = dem_data[nearest_rows, nearest_cols].astype(np.float32)
+
+    # Apply nodata mask to all output bands
+    nearest_rows[nodata_mask] = dem_nodata
+    nearest_cols[nodata_mask] = dem_nodata
+    xs[nodata_mask] = dem_nodata
+    ys[nodata_mask] = dem_nodata
+    z_divide[nodata_mask] = dem_nodata
+
+    # Write output raster with 5 bands (all float32):
+    out_profile = dem_profile.copy()
+    out_profile.update(
+        dtype=rasterio.float32,
+        count=5,
+        compress='deflate'
+        )
+
+    with rasterio.open(output, 'w', **out_profile) as dst:
+        dst.write(nearest_rows.astype(np.float32), 1)
+        dst.write(nearest_cols.astype(np.float32), 2)
+        dst.write(xs, 3)
+        dst.write(ys, 4)
+        dst.write(z_divide, 5)
+
+        # Add band descriptions
+        dst.set_band_description(1, 'nearest_divide_row')
+        dst.set_band_description(2, 'nearest_divide_col')
+        dst.set_band_description(3, 'nearest_divide_x')
+        dst.set_band_description(4, 'nearest_divide_y')
+        dst.set_band_description(5, 'nearest_divide_z')
+
+
 def generate_topo_features_for_tile(
         tile_bbox_data: pd.Series,
         dem_path: str | Path,
