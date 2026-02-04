@@ -826,13 +826,23 @@ def generate_topo_features_for_tile(
     ty, tx = ast.literal_eval(tile_index)
 
     FEATURES = [
-        'dem', 'dem_smooth', 'dem_cond', 'slope', 'curvature',
-        'flow_accum', 'streams', 'nearest_stream_coords',
-        'geomorphons', 'ridges', 'nearest_ridge_coords',
-        'long_hessian_stats', 'long_grad_stats',
+        'dem', 'dem_smooth', 'dem_cond',
+        'slope', 'curvature', 'flow_accum',
+        'streams',
+        'nearest_stream_coords',
+        'geomorphons',
+        'ridges',
+        'nearest_ridge_coords',
+        'long_hessian_stats',
+        'long_grad_stats',
         'short_grad_stats',
-        'stream_grad_stats', 'stream_hessian_stats',
+        'stream_grad_stats',
+        'stream_hessian_stats',
         'wetness_index',
+        'd8_pointer',
+        'subbasins',
+        'divides',
+        'nearest_divide_coords'
         ]
 
     wbt = whitebox.WhiteboxTools()
@@ -976,6 +986,24 @@ def generate_topo_features_for_tile(
             'func': wbt.wetness_index,
             'kwargs': {'sca': tile_paths['flow_accum'],
                        'slope': tile_paths['slope']}
+            },
+        'd8_pointer': {
+            'func': wbt.d8_pointer,
+            'kwargs': {'dem': tile_paths['dem_cond']}
+            },
+        'subbasins': {
+            'func': wbt.subbasins,
+            'kwargs': {'d8_pntr': tile_paths['d8_pointer'],
+                       'streams': tile_paths['streams']}
+            },
+        'divides': {
+            'func': extract_divides,
+            'kwargs': {'subbassins': tile_paths['subbasins']}
+            },
+        'nearest_divide_coords': {
+            'func': nearest_divide_coords,
+            'kwargs': {'dem': tile_paths['dem_cond'],
+                       'divides': tile_paths['divides']}
             },
         }
 
