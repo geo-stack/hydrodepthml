@@ -297,7 +297,7 @@ fig2.tight_layout()
 
 
 X_train = df_resample.loc[train_index, features].values
-y_train = (df_resample.loc[train_index, 'point_z'].values - 
+y_train = (df_resample.loc[train_index, 'point_z'].values -
            df_resample.loc[train_index, 'NS'].values)
 
 
@@ -369,7 +369,7 @@ sfs.fit(X_train, y_train)
 print("\nLes 5 caractéristiques retenues par SBS :")
 # On récupère les indices des colonnes sélectionnées
 selected_features = np.array(features)[sfs.get_support()]
-print(selected_features)    
+print(selected_features)
 # %%10
 
 point = df.loc[df.ID == 'KR-0432-F']
