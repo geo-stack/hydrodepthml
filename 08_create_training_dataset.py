@@ -301,6 +301,17 @@ for index, row in gwl_gdf.iterrows():
     precip_values = precip_means_wtd_basins.loc[date_range, basin_id]
     gwl_gdf.loc[index, 'precipitation'] = np.mean(precip_values)
 
+    # Add yearly (2 years prior) average NDVI and precip average
+    # values (at the basin scale).
+    date_end = row.DATE
+    date_start = date_end - pd.Timedelta(days=360 * 2)
+    date_range = pd.date_range(date_start, date_end)
+
+    ndvi_values = ndvi_means_wtd_basins.loc[date_range, basin_id]
+    gwl_gdf.loc[index, 'ndvi_yrly_avg'] = np.nanmean(ndvi_values)
+
+    precip_values = precip_means_wtd_basins.loc[date_range, basin_id]
+    gwl_gdf.loc[index, 'precip_yrly_avg'] = np.nanmean(precip_values)
 
 print("Saving dataset to file...")
 gwl_gdf.to_csv(OUTPUT_FILE)
