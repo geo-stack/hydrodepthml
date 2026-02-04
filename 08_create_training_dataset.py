@@ -107,7 +107,15 @@ tiles_cropped_dir.mkdir(parents=True, exist_ok=True)
 model_dir = datadir / 'model'
 model_dir.mkdir(parents=True, exist_ok=True)
 
-OUTPUT_FILE = model_dir / "wtd_obs_training_dataset_sig4.csv"
+filter_sigma = 1
+stream_treshold = 500
+
+OUTPUT_FILE = (
+    model_dir /
+    f"wtd_obs_training_dataset_"
+    f"sig{filter_sigma}_"
+    f"st{stream_treshold}.csv"
+    )
 
 # %%
 
@@ -132,8 +140,8 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
         crop_tile_dir=tiles_cropped_dir,
         ovlp_tile_dir=tiles_overlap_dir,
         print_affix=progress,
-        extract_streams_treshold=500,
-        gaussian_filter_sigma=4,
+        extract_streams_treshold=stream_treshold,
+        gaussian_filter_sigma=filter_sigma,
         ridge_size=30,
         )
 
