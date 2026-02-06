@@ -833,6 +833,9 @@ def generate_topo_features_for_tile(
         'geomorphons',
         'ridges',
         'nearest_ridge_coords',
+        'long_dem_stats',
+        'short_dem_stats',
+        'stream_dem_stats',
         'long_hessian_stats',
         'long_grad_stats',
         'short_grad_stats',
@@ -955,10 +958,32 @@ def generate_topo_features_for_tile(
             'kwargs': {'dem': tile_paths['dem_cond'],
                        'ridges': tile_paths['ridges']}
             },
+        'short_dem_stats': {
+            'func': local_stats,
+            'kwargs': {'raster': tile_paths['dem'],
+                       'window': short_stats_window}
+            },
+        'long_dem_stats': {
+            'func': local_stats,
+            'kwargs': {'raster': tile_paths['dem'],
+                       'window': long_stats_window}
+            },
+        'stream_dem_stats': {
+            'func': stream_stats,
+            'kwargs': {'raster': tile_paths['dem'],
+                       'dist_stream': tile_paths['nearest_stream_coords'],
+                       'fisher': False}
+            },
         'long_hessian_stats': {
             'func': local_stats,
             'kwargs': {'raster': tile_paths['curvature'],
                        'window': long_stats_window}
+            },
+        'stream_hessian_stats': {
+            'func': stream_stats,
+            'kwargs': {'raster': tile_paths['curvature'],
+                       'dist_stream': tile_paths['nearest_stream_coords'],
+                       'fisher': False}
             },
         'long_grad_stats': {
             'func': local_stats,
@@ -973,12 +998,6 @@ def generate_topo_features_for_tile(
         'stream_grad_stats': {
             'func': stream_stats,
             'kwargs': {'raster': tile_paths['slope'],
-                       'dist_stream': tile_paths['nearest_stream_coords'],
-                       'fisher': False}
-            },
-        'stream_hessian_stats': {
-            'func': stream_stats,
-            'kwargs': {'raster': tile_paths['curvature'],
                        'dist_stream': tile_paths['nearest_stream_coords'],
                        'fisher': False}
             },
