@@ -237,6 +237,9 @@ for tile_idx, group in joined.groupby('tile_index'):
         }
 
     name_bands = {
+        'long_dem': ['max', 'min', 'mean', 'var', 'skew', 'kurt'],
+        'short_dem': ['max', 'min', 'mean', 'var', 'skew', 'kurt'],
+        'stream_dem': ['max', 'min', 'mean', 'var', 'skew', 'kurt'],
         'long_hessian': ['max', 'mean', 'var', 'skew', 'kurt'],
         'long_grad': ['mean', 'var'],
         'short_grad': ['max', 'var', 'mean'],
