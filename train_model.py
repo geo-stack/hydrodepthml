@@ -82,6 +82,27 @@ features = [
     'dist_divide',
     'alt_divide',
     'ratio_stream_divide'  # dist_stream / (dist_divide + dist_stream)
+    # long dem stats (1230 m)
+    'long_dem_max',
+    'long_dem_mean',
+    'long_dem_min',
+    'long_dem_var',
+    'long_dem_skew',
+    'long_dem_kurt',
+    # short dem stats (210 m)
+    'short_dem_max',
+    'short_dem_mean',
+    'short_dem_min',
+    'short_dem_var',
+    'short_dem_skew',
+    'short_dem_kurt',
+    # stream stats
+    'stream_dem_max',
+    'stream_dem_mean',
+    'stream_dem_min',
+    'stream_dem_var',
+    'stream_dem_skew',
+    'stream_dem_kurt',
     ]
 
 
