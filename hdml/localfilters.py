@@ -142,7 +142,7 @@ def window_stats_numba(arr, fisher=False):
         Returns (nan, nan, nan, nan, nan, nan) if fewer than 4 valid values.
     """
     nr, nc = arr.shape
-    if nr * nc < 4:
+    if nr * nc == 0:
         return NODATA, NODATA, NODATA, NODATA, NODATA, NODATA
 
     # First pass: calculate mean, min, max.
@@ -161,7 +161,7 @@ def window_stats_numba(arr, fisher=False):
                     max_val = val
                 count += 1
 
-    if count < 4:
+    if count == 0:
         return NODATA, NODATA, NODATA, NODATA, NODATA, NODATA
 
     mean_val /= count
@@ -172,7 +172,7 @@ def window_stats_numba(arr, fisher=False):
     m4 = 0.0
     for i in range(nr):
         for j in range(nc):
-            if not np.isnan(arr[i, j]):
+            if arr[i, j] != NODATA:
                 diff = arr[i, j] - mean_val
                 diff2 = diff * diff
                 var += diff2
@@ -184,8 +184,8 @@ def window_stats_numba(arr, fisher=False):
     m4 /= count
 
     if var == 0.0:
-        skew = NODATA
-        kurt = NODATA
+        skew = 0
+        kurt = 0
     else:
         # Calculate skewness
         skew = m3 / (var ** 1.5)
