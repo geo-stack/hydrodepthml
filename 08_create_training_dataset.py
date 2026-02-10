@@ -259,6 +259,8 @@ for tile_idx, group in joined.groupby('tile_index'):
             index = band_index_map[band]
             gwl_gdf.loc[group.index, f'{name}_{band}'] = values[:, index]
 
+    gwl_gdf.loc[group.index, 'tile_index'] = f'{ty:03d}_{tx:03d}'
+
     count += 1
 
 
@@ -343,4 +345,4 @@ for index, row in gwl_gdf.iterrows():
     gwl_gdf.loc[index, 'precip_yrly_avg'] = np.nanmean(precip_values)
 
 print("Saving dataset to file...")
-gwl_gdf.to_csv(OUTPUT_FILE)
+gwl_gdf.to_csv(OUTPUT_FILE, index=False)
