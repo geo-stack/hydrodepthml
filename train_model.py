@@ -30,7 +30,7 @@ from hdml import __datadir__ as datadir
 from hdml.modeling import plot_pred_vs_obs
 from hdml.ml_helpers import plot_feature_importance
 
-wtd_path = datadir / 'model' / "wtd_obs_training_dataset_sig1_st1500.csv"
+wtd_path = datadir / 'model' / "wtd_obs_training_dataset_sig1_st500.csv"
 if not wtd_path.exists():
     raise FileNotFoundError(
         "Make sure to run 'create_training_dataset.py' before running this "
@@ -112,7 +112,7 @@ cols_to_add = [
     'long_dem_skew', 'long_dem_kurt', 'short_dem_max', 'short_dem_mean',
     'short_dem_min', 'short_dem_var', 'short_dem_skew', 'short_dem_kurt',
     'stream_dem_max', 'stream_dem_mean', 'stream_dem_min', 'stream_dem_var',
-    'stream_dem_skew', 'stream_dem_kurt'
+    'stream_dem_skew', 'stream_dem_kurt', 'tile_index'
     ]
 cols_to_add = [
     col for col in cols_to_add if col not in df.columns and col != 'ID'
@@ -121,7 +121,8 @@ cols_to_add = [
 if len(cols_to_add) != 0:
     print('Adding missing columns to dataframe...')
     df_full = pd.read_csv(
-        datadir / 'model' / 'wtd_obs_training_dataset_sig1_st500.csv'
+        datadir / 'model' / 'wtd_obs_training_dataset_sig1_st500.csv',
+        index_col=False
         )
 
     df = df.merge(df_full[['ID'] + cols_to_add], on='ID', how='left')
