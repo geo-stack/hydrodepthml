@@ -40,8 +40,7 @@ if not wtd_path.exists():
 
 # %%
 
-df = pd.read_csv(wtd_path)
-df = df.dropna()
+df = pd.read_csv(wtd_path, index_col=False)
 
 # grad -> slope
 # hessian -> first derivative of the slope
@@ -52,25 +51,25 @@ df = df.dropna()
 
 features = [
     'dist_stream',
-    'dist_top',
+    # 'dist_top',
     # 'ratio_dist',
     'alt_stream',             # point_z - stream_z
     # 'alt_top',              # ridge_z - point_z
-    'ratio_stream',         # (point_z - stream_z) / dist_stream
-    'long_hessian_max',
+    # 'ratio_stream',         # (point_z - stream_z) / dist_stream
+    # 'long_hessian_max',
     'long_hessian_mean',
     'long_hessian_var',
-    'long_hessian_skew',
-    'long_hessian_kurt',
-    'long_grad_mean',
-    'long_grad_var',
-    'short_grad_max',
+    # 'long_hessian_skew',
+    # 'long_hessian_kurt',
+    # 'long_grad_mean',
+    # 'long_grad_var',
+    # 'short_grad_max',
     'short_grad_var',
     'short_grad_mean',
-    'stream_grad_max',
-    'stream_grad_var',
-    'stream_grad_mean',
-    'stream_hessian_max',
+    # 'stream_grad_max',
+    # 'stream_grad_var',
+    # 'stream_grad_mean',
+    # 'stream_hessian_max',
     'ndvi',
     'precipitation',
     'pre_mm_syr',  # average annual precipitation for sub-bassin
@@ -81,30 +80,33 @@ features = [
     'ndvi_yrly_avg',
     'precip_yrly_avg',
     'dist_divide',
-    'alt_divide',
+    'alt_divide',  # divide_z - point_z
     'ratio_stream_divide',  # dist_stream / (dist_divide + dist_stream)
-    # long dem stats (1230 m)
-    'long_dem_max',
+    # 'long_dem_max',
     'long_dem_mean',
-    'long_dem_min',
+    # 'long_dem_min',
     'long_dem_var',
-    'long_dem_skew',
-    'long_dem_kurt',
-    # short dem stats (210 m)
-    'short_dem_max',
+    # 'long_dem_skew',
+    # 'long_dem_kurt',
+    # 'short_dem_max',
     'short_dem_mean',
-    'short_dem_min',
+    # 'short_dem_min',
     'short_dem_var',
-    'short_dem_skew',
-    'short_dem_kurt',
-    # stream stats
-    'stream_dem_max',
-    'stream_dem_mean',
-    'stream_dem_min',
-    'stream_dem_var',
-    'stream_dem_skew',
-    'stream_dem_kurt',
+    # 'short_dem_skew',
+    # 'short_dem_kurt',
+    # 'stream_dem_max',
+    # 'stream_dem_mean',
+    # 'stream_dem_min',
+    # 'stream_dem_var',
+    # 'stream_dem_skew',
+    # 'stream_dem_kurt',
+    'elev',
+    'elev_long_res',
+    'elev_short_res'
     ]
+
+df['elev_long_res'] = df['elev'] - df['long_dem_mean']
+df['elev_short_res'] = df['elev'] - df['short_dem_mean']
 
 # Add missing DEM stats features.
 cols_to_add = [
@@ -133,6 +135,12 @@ if len(cols_to_add) != 0:
 for feature in features:
     if feature not in df.columns:
         print(f"Feature {feature} is missing from dataset.")
+
+# %%
+
+data_pt = df.loc[df.ID == '18389'].iloc[0]
+for key in data_pt.keys():
+    print(key, data_pt[key])
 
 # %%
 
@@ -323,60 +331,109 @@ plt.show()
 # sns.pairplot(df_resample.loc[:, features_to_plot], hue='NS')
 # %%
 from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
+from sklearn.model_selection import train_test_split
+
+features = [
+    'dist_stream',
+    # 'dist_top',
+    # 'ratio_dist',
+    'alt_stream',             # point_z - stream_z
+    # 'alt_top',              # ridge_z - point_z
+    # 'ratio_stream',         # (point_z - stream_z) / dist_stream
+    # 'long_hessian_max',
+    'long_hessian_mean',
+    'long_hessian_var',
+    'long_hessian_skew',
+    'long_hessian_kurt',
+    'long_grad_mean',
+    'long_grad_var',
+    'short_grad_max',
+    'short_grad_var',
+    'short_grad_mean',
+    'stream_grad_max',
+    'stream_grad_var',
+    'stream_grad_mean',
+    'stream_hessian_max',
+    'ndvi',
+    'precipitation',
+    'pre_mm_syr',  # average annual precipitation for sub-bassin
+    'tmp_dc_syr',  # average annual air temperature for sub-bassin
+    'pet_mm_syr',  # average annual potential evapotranspiration for sub-bassin
+    'wetness_index',
+    # 'point_z',      # Elevation of pixel
+    'ndvi_yrly_avg',
+    'precip_yrly_avg',
+    'dist_divide',
+    'alt_divide',
+    'ratio_stream_divide',  # dist_stream / (dist_divide + dist_stream)
+    'long_dem_max',
+    'long_dem_mean',
+    'long_dem_min',
+    'long_dem_var',
+    'long_dem_skew',
+    'long_dem_kurt',
+    'short_dem_max',
+    'short_dem_mean',
+    'short_dem_min',
+    'short_dem_var',
+    'short_dem_skew',
+    'short_dem_kurt',
+    'stream_dem_max',
+    'stream_dem_mean',
+    'stream_dem_min',
+    'stream_dem_var',
+    'stream_dem_skew',
+    'stream_dem_kurt',
+    'elev',
+    'elev_long_res',
+    'elev_short_res'
+    ]
 
 plt.close('all')
 
 # 'Burkina', 'Guinee', 'Benin', 'Mali', 'Chad', 'Niger', 'Togo'
 test_country = 'Mali'
 
+train_index = df[(df.country == test_country) & (df.LON < -6.2)].index
+test_index = df[(df.country == test_country) & (df.LON > -6.2)].index
 
-train_index = df_resample[(df_resample.country == test_country)& (df_resample.LAT<11.5)].index
-test_index = df_resample[(df_resample.country == test_country) & (df_resample.LAT>11.5)].index
+# train_index = df[(df.country != test_country)].index
+# test_index = df[(df.country == test_country)].index
 
-# train_index = df_resample[(df_resample.country != test_country)].index
-# test_index = df_resample[(df_resample.country == test_country)].index
+# train_df, test_df = train_test_split(
+#     df.loc[df.tile_index == '020_004'], test_size=0.2, random_state=42)
 
-df_train = df_resample.loc[train_index]
-df_test = df_resample.loc[test_index]
+# train_index = train_df.index
+# test_index = test_df.index
+
+df_train = df.loc[train_index]
+df_test = df.loc[test_index]
 
 fig2, ax2 = plt.subplots()
-ax2.plot(df_train.LON, df_train.LAT, '.', color='orange')
-ax2.plot(df_test.LON, df_test.LAT, '.', color='blue')
+ax2.plot(df_train.LON, df_train.LAT, '.', color='orange', ms=1)
+ax2.plot(df_test.LON, df_test.LAT, '.', color='blue', ms=1)
 fig2.tight_layout()
 
+X_train = df.loc[train_index, features]
+# y_train = df.loc[train_index, 'elev'].values - df.loc[train_index, 'NS'].values
+y_train = df.loc[train_index, 'NS'].values
 
-X_train = df_resample.loc[train_index, features].values
-y_train = (df_resample.loc[train_index, 'point_z'].values -
-           df_resample.loc[train_index, 'NS'].values)
-
-
-X_test = df_resample.loc[test_index, features].values
-y_test = df_resample.loc[test_index, 'point_z'].values - df_resample.loc[test_index, 'NS'].values
+X_test = df.loc[test_index, features]
+# y_test = df.loc[test_index, 'elev'].values - df.loc[test_index, 'NS'].values
+y_test = df.loc[test_index, 'NS'].values
 
 # ss = StandardScaler()
 # X_train = ss.fit_transform(X_train)
 # X_test = ss.transform(X_test)
 
-# params = {
-#     'random_state': 42,
-#     'n_estimators': 100,
-#     # 'max_depth': 10,
-#     # 'subsample': 0.3,
-#     # 'gamma': 1,
-#     # 'colsample_bytree': 1,
-#     # 'reg_alpha': 0,
-#     # 'reg_lambda': 6,
-#     # 'learning_rate': 0.25
-#     }
-
-params = {'subsample': 0.6,
+params = {'subsample': 0.7,
           'reg_lambda': 2.5,
           'reg_alpha': 1.5,
           'n_estimators': 1000,
-          'max_depth': 4,
-          'learning_rate': 0.03,
-          'gamma': 0.1,
-          'colsample_bytree': 0.7}
+          'max_depth': 5,
+          'learning_rate': 0.2,
+          'gamma': 0.095,
+          'colsample_bytree': 0.5}
 
 Cl = xgb_model = xgb.XGBRegressor(**params)
 # Cl = HistGradientBoostingRegressor(max_depth=3, loss='gamma', quantile=0.75)
@@ -384,26 +441,73 @@ Cl = xgb_model = xgb.XGBRegressor(**params)
 # Cl = RandomForestRegressor(max_depth=4, n_estimators=1000)
 Cl.fit(X_train, y_train)
 
-# fig3 = plot_feature_importance(Cl.feature_importances_, features)
+fig3 = plot_feature_importance(Cl.feature_importances_, features)
 
-y_eval = Cl.predict(X_test)
-classes = np.full(len(y_test), f'{test_country}')
-axis = {'xmin': 300, 'xmax': 400, 'ymin': 300, 'ymax': 400}
-fig4 = plot_pred_vs_obs(
-    y_test, y_eval, classes, axis=axis,
-    suptitle='True vs Predicted values',
-    plot_stats=True
-    )
-fig4.tight_layout()
+# Plot test NS True vs predicted.
 
-y_eval = Cl.predict(X_train)
-classes = np.full(len(y_eval), f'All but {test_country}')
+y_test_eval = Cl.predict(X_test)
+classes = np.full(len(y_test), 'NS test')
+
+xymax = np.max([np.max(y_test), np.max(y_test_eval)])
+xymax = xymax * 1.05
+
+classes = np.full(len(y_test_eval), f'All but {test_country}')
 fig5 = plot_pred_vs_obs(
-    y_train, y_eval, classes, axis=axis,
+    y_test, y_test_eval, classes,
+    axis={'xmin': 0, 'xmax': xymax, 'ymin': 0, 'ymax': xymax},
     suptitle='True vs Predicted values',
     plot_stats=True
     )
 
+print(np.mean((y_test - y_test_eval)**2)**0.5)
+
+y_train_eval = Cl.predict(X_train)
+
+xymax = np.max([np.max(y_train), np.max(y_train_eval)])
+xymax = xymax * 1.05
+
+classes = np.full(len(y_train_eval), 'NS train')
+fig7 = plot_pred_vs_obs(
+    y_train, y_train_eval, classes,
+    axis={'xmin': 0, 'xmax': xymax, 'ymin': 0, 'ymax': xymax},
+    suptitle='True vs Predicted values',
+    plot_stats=True
+    )
+
+# # Plot test ELEV True vs predicted.
+
+# y_test_elev =  df.loc[test_index, 'elev'].values - y_test
+# y_test_eval_elev = df.loc[test_index, 'elev'].values - y_test_eval
+
+# xymax = np.max([np.max(y_test_elev), np.max(y_test_eval_elev)])
+# xymax = xymax * 1.05
+
+# classes = np.full(len(y_test_elev), 'Elevation test')
+
+# fig4 = plot_pred_vs_obs(
+#     y_test_elev, y_test_eval_elev, classes,
+#     axis={'xmin': 0, 'xmax': xymax, 'ymin': 0, 'ymax': xymax},
+#     suptitle='True vs Predicted values',
+#     plot_stats=True
+#     )
+# fig4.tight_layout()
+
+# # Plot train ELEV True vs predicted.
+
+# elev_train = df.loc[train_index, 'elev'].values
+# y_train_elev = elev_train - y_train
+# y_train_eval_elev = elev_train - y_train_eval
+
+# xymax = np.max([np.max(y_train_elev), np.max(y_train_eval_elev)])
+# xymax = xymax * 1.05
+
+# classes = np.full(len(y_train_elev), 'Elevation train')
+# fig6 = plot_pred_vs_obs(
+#     y_train_eval_elev, y_train_elev, classes,
+#     axis={'xmin': 0, 'xmax': xymax, 'ymin': 0, 'ymax': xymax},
+#     suptitle='True vs Predicted values',
+#     plot_stats=True
+#     )
 
 # %%
 from sklearn.feature_selection import SequentialFeatureSelector
