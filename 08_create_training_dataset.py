@@ -176,6 +176,15 @@ for tile_idx, group in joined.groupby('tile_index'):
 
         gwl_gdf.loc[group.index, 'elev'] = values[:, 0]
 
+    name = 'world_koppen'
+    tile_name = f'{name}.tiff'
+    tif_path = datadir / 'climate_zones' / tile_name
+    with rasterio.open(tif_path) as src:
+        values = np.array(list(src.sample(coords)), dtype=int)
+        values[values == src.nodata] = -1
+
+        gwl_gdf.loc[group.index, name] = values[:, 0]
+
     name = 'dem_cond'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
     tif_path = tiles_cropped_dir / name / tile_name
@@ -264,8 +273,6 @@ for tile_idx, group in joined.groupby('tile_index'):
     count += 1
 
 
-# %%
-
 # Calculate distances and ratios.
 
 print('Calculate distances and ratios...')
@@ -303,8 +310,6 @@ gwl_gdf['ratio_stream_divide'] = (
     gwl_gdf.dist_stream / (gwl_gdf.dist_divide + gwl_gdf.dist_stream)
     )
 
-
-# %%
 
 # Add precip and ndvi avg sub-basin values for each water level observation.
 
@@ -344,5 +349,7 @@ for index, row in gwl_gdf.iterrows():
     precip_values = precip_means_wtd_basins.loc[date_range, basin_id]
     gwl_gdf.loc[index, 'precip_yrly_avg'] = np.nanmean(precip_values)
 
+
+# %%
 print("Saving dataset to file...")
 gwl_gdf.to_csv(OUTPUT_FILE, index=False)
