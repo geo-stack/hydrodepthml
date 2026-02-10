@@ -126,7 +126,7 @@ if len(cols_to_add) != 0:
 
     df = df.merge(df_full[['ID'] + cols_to_add], on='ID', how='left')
 
-    df.to_csv(wtd_path)
+    df.to_csv(wtd_path, index=False)
 
 # Check for missing features.
 for feature in features:
