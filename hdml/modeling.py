@@ -187,10 +187,10 @@ def plot_pred_vs_obs(
 
         for i, cl in enumerate(np.unique(classes)):
             mask = classes == cl
-            rmse = (np.mean((xobs[mask] - xpred[mask])**2))**0.5
+            mae = (np.mean(np.abs(xobs[mask] - xpred[mask])))
             transform = ax.transAxes + ScaledTranslation(
                 hshift, vshift, fig.dpi_scale_trans)
-            ax.text(0, 1, f'{str(cl)[:4]} = {rmse:0.3f}',
+            ax.text(0, 1, f'{str(cl)[:4]} = {mae:0.3f}',
                     va='top', ha='left', fontsize=9, transform=transform,
                     zorder=1000)
 
