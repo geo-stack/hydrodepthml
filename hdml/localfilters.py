@@ -202,13 +202,3 @@ def window_stats_numba(arr, fisher=False):
             kurt -= 3.0
 
     return min_val, max_val, mean_val, var, skew, kurt
-
-
-if __name__ == '__main__':
-    import rasterio
-    dist_stream = "D:/Projets/sahel/data/training/tiles (overlapped)/dist_stream/dist_stream_tile_017_012.tif"
-    with rasterio.open(dist_stream) as src:
-        stream_rows = src.read(2).astype(int)
-        stream_cols = src.read(3).astype(int)
-
-    results = stream_downslope_stats(grid, rows_stream, cols_stream)
