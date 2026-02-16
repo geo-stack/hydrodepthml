@@ -1,0 +1,108 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.3.6 Chrome/140.0.7339.249 Electron/38.8.0 Safari/537.36" version="29.3.6">
+  <diagram name="Page-1" id="EHzd1eoogBjulRqw7m7H">
+    <mxGraphModel dx="1426" dy="849" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="OUIN07hWEChSqRsRtpa_-1" edge="1" parent="1" source="OUIN07hWEChSqRsRtpa_-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="OUIN07hWEChSqRsRtpa_-8" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="412.5" y="170" as="sourcePoint" />
+            <mxPoint x="412.5" y="190" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-2" edge="1" parent="1" source="OUIN07hWEChSqRsRtpa_-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" target="OUIN07hWEChSqRsRtpa_-11">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="590" y="350" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;START&lt;/font&gt;&lt;/b&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Predict water table static&lt;/div&gt;&lt;div&gt;depth in a new area&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="170" x="327.5" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-4" edge="1" parent="1" source="OUIN07hWEChSqRsRtpa_-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" target="OUIN07hWEChSqRsRtpa_-20">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="577.5" y="250" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-5" connectable="0" parent="OUIN07hWEChSqRsRtpa_-4" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="YES" vertex="1">
+          <mxGeometry relative="1" x="-0.4857" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-6" edge="1" parent="1" source="OUIN07hWEChSqRsRtpa_-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="OUIN07hWEChSqRsRtpa_-11" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-7" connectable="0" parent="OUIN07hWEChSqRsRtpa_-6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="NO" vertex="1">
+          <mxGeometry relative="1" x="-0.3" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-8" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="First time running&lt;div&gt;the scripts on&lt;/div&gt;&lt;div&gt;this PC?&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="210" x="307.5" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-9" edge="1" parent="1" source="OUIN07hWEChSqRsRtpa_-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="OUIN07hWEChSqRsRtpa_-16">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="412.5" y="590" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-10" connectable="0" parent="OUIN07hWEChSqRsRtpa_-9" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="NO" vertex="1">
+          <mxGeometry relative="1" x="-0.1268" y="2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-11" parent="1" style="rhombus;whiteSpace=wrap;html=1;" value="New groundwater&lt;div&gt;depth observations?&lt;/div&gt;" vertex="1">
+          <mxGeometry height="90" width="210" x="307.5" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-12" edge="1" parent="1" source="OUIN07hWEChSqRsRtpa_-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="OUIN07hWEChSqRsRtpa_-16">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-13" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Run" vertex="1">
+          <mxGeometry height="139" width="200" x="120" y="400" as="geometry">
+            <mxRectangle height="30" width="140" x="50" y="520" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-14" parent="OUIN07hWEChSqRsRtpa_-13" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" value="&lt;div style=&quot;line-height: 150%;&quot;&gt;&lt;div&gt;&lt;i&gt;03_process_wtd_observation.py&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;05_process_ndvi_data.py&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;06_process_precip_data.py&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;07_create_spatial_grid.py&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;08_create_training_dataset.py&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;09_create_ml_model.py&lt;/i&gt;&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="118" width="190" x="5" y="21" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-15" edge="1" parent="1" source="OUIN07hWEChSqRsRtpa_-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="OUIN07hWEChSqRsRtpa_-22">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-16" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Run" vertex="1">
+          <mxGeometry height="50" width="200" x="312.5" y="570" as="geometry">
+            <mxRectangle height="30" width="140" x="50" y="520" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-17" parent="OUIN07hWEChSqRsRtpa_-16" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;text-align: center;&quot;&gt;&lt;i&gt;10_create_wtd_prediction.py&lt;/i&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="20" width="190" x="5" y="27" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-18" edge="1" parent="1" source="OUIN07hWEChSqRsRtpa_-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="OUIN07hWEChSqRsRtpa_-13">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-19" connectable="0" parent="OUIN07hWEChSqRsRtpa_-18" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="YES" vertex="1">
+          <mxGeometry relative="1" x="-0.3716" y="-2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-20" parent="1" style="swimlane;whiteSpace=wrap;html=1;" value="Run" vertex="1">
+          <mxGeometry height="50" width="205" x="495" y="250" as="geometry">
+            <mxRectangle height="30" width="140" x="495" y="250" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-21" parent="OUIN07hWEChSqRsRtpa_-20" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=4;spacingRight=4;overflow=hidden;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rotatable=0;whiteSpace=wrap;html=1;" value="&lt;div style=&quot;&quot;&gt;&lt;span style=&quot;text-align: center;&quot;&gt;&lt;i&gt;04_process_dem_data.py&lt;/i&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="20" width="190" x="5" y="27" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-22" parent="1" style="rounded=1;whiteSpace=wrap;html=1;" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;END&lt;/font&gt;&lt;/b&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Water table static depth predicted&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="145" x="340" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-23" connectable="0" parent="1" style="group" value="" vertex="1">
+          <mxGeometry height="100" width="160" x="120" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-24" parent="OUIN07hWEChSqRsRtpa_-23" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=25;" value="&lt;div&gt;&lt;i&gt;&lt;b&gt;&lt;font&gt;Note&lt;/font&gt;&lt;/b&gt;&lt;/i&gt;&lt;/div&gt;&lt;i&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/i&gt;" vertex="1">
+          <mxGeometry height="100" width="160" as="geometry" />
+        </mxCell>
+        <mxCell id="OUIN07hWEChSqRsRtpa_-25" parent="OUIN07hWEChSqRsRtpa_-23" style="text;whiteSpace=wrap;html=1;align=center;" value="&lt;i style=&quot;forced-color-adjust: none; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-family: Helvetica; font-size: 12px; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: transparent; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;&quot;&gt;Outputs from scripts 01, 02, and 11 are included in the repository. You should not need to run them.&lt;/i&gt;" vertex="1">
+          <mxGeometry height="70" width="140" x="10" y="27" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
