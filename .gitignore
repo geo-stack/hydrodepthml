@@ -3,7 +3,6 @@ notebooks/*.py
 data/chirps/*
 data/dem/*
 data/results/*
-data/climate_zones/*
 data/ndvi/*
 data/precip/*
 data/topo/*
