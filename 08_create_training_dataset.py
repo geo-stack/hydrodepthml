@@ -167,6 +167,9 @@ for tile_idx, group in joined.groupby('tile_index'):
     coords = [(geom.x, geom.y) for geom in group.geometry]
     ty, tx = ast.literal_eval(tile_idx)
 
+    # Add tile index.
+    gwl_gdf.loc[group.index, 'tile_index'] = f'{ty:03d}_{tx:03d}'
+
     name = 'dem'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
     tif_path = tiles_cropped_dir / name / tile_name
@@ -175,15 +178,6 @@ for tile_idx, group in joined.groupby('tile_index'):
         values[values == src.nodata] = np.nan
 
         gwl_gdf.loc[group.index, 'elev'] = values[:, 0]
-
-    name = 'world_koppen'
-    tile_name = f'{name}.tiff'
-    tif_path = datadir / 'climate_zones' / tile_name
-    with rasterio.open(tif_path) as src:
-        values = np.array(list(src.sample(coords)), dtype=int)
-        values[values == src.nodata] = -1
-
-        gwl_gdf.loc[group.index, name] = values[:, 0]
 
     name = 'dem_cond'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
@@ -268,7 +262,14 @@ for tile_idx, group in joined.groupby('tile_index'):
             index = band_index_map[band]
             gwl_gdf.loc[group.index, f'{name}_{band}'] = values[:, index]
 
-    gwl_gdf.loc[group.index, 'tile_index'] = f'{ty:03d}_{tx:03d}'
+    name = 'world_koppen'
+    tile_name = 'koppen_climate_zones.tif'
+    tif_path = datadir / 'climate_zones' / tile_name
+    with rasterio.open(tif_path) as src:
+        values = np.array(list(src.sample(coords)), dtype=int)
+        values[values == src.nodata] = -1
+
+        gwl_gdf.loc[group.index, name] = values[:, 0]
 
     count += 1
 
