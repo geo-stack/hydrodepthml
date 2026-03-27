@@ -26,7 +26,6 @@ from skimage.morphology import skeletonize, remove_small_objects
 import whitebox
 
 # ---- Local imports
-from hdml import __datadir__ as datadir
 from hdml.math import bresenham_line, precompute_spiral_offsets
 from hdml.localfilters import local_stats_numba, downslope_stats_numba, NODATA
 from hdml.tiling import extract_tile, crop_tile
@@ -790,7 +789,6 @@ def generate_topo_features_for_tile(
         print_affix: str = None,
         extract_streams_treshold: int = 1500,
         gaussian_filter_sigma: int = 1,
-        ridge_size: int = 30,
         long_stats_window: int = 41,
         short_stats_window: int = 7,
         overwrite: bool = False,
