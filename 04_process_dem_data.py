@@ -190,14 +190,14 @@ for i, zip_name in enumerate(zip_names):
 
 # Convert hgt files to GeoTiff.
 
-print()
-print('Converting HGT archives to geoTiff...')
-
 if len(zip_fpaths) > 0:
+    print('Converting HGT archives to geoTiff...')
     multi_convert_hgt_to_geotiff(zip_fpaths, tif_fpaths)
 
 
 # %%
+
+print('Generating virtual dataset...')
 
 # Generate a GDAL virtual raster (VRT) mosaic of all DEM GeoTIFFs.
 vrt_path = DEST_DIR / 'nasadem.vrt'
