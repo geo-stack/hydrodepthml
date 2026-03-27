@@ -63,10 +63,9 @@ These instructions use graphical interfaces (Anaconda Navigator and GitHub Deskt
 2. Click **Environments** (left sidebar)
 3. Click **Import** (bottom of environment list)
 4. In the dialog:
-   - **Name**: `hydrodepthml`
    - Click the 📁 folder icon next to "Specification file"
    - Navigate to where you cloned the repository
-   - Select `environment.yml`
+   - Select `hydrodepthml.yml`
 5. Click **Import**
 6. Wait for installation (10-20 minutes depending on your internet connection)
 
