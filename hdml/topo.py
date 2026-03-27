@@ -26,7 +26,6 @@ from skimage.morphology import skeletonize, remove_small_objects
 import whitebox
 
 # ---- Local imports
-from hdml import __datadir__ as datadir
 from hdml.math import bresenham_line, precompute_spiral_offsets
 from hdml.localfilters import local_stats_numba, downslope_stats_numba, NODATA
 from hdml.tiling import extract_tile, crop_tile
@@ -790,7 +789,6 @@ def generate_topo_features_for_tile(
         print_affix: str = None,
         extract_streams_treshold: int = 1500,
         gaussian_filter_sigma: int = 1,
-        ridge_size: int = 30,
         long_stats_window: int = 41,
         short_stats_window: int = 7,
         overwrite: bool = False,
@@ -828,24 +826,13 @@ def generate_topo_features_for_tile(
     FEATURES = [
         'dem', 'dem_smooth', 'dem_cond',
         'slope', 'curvature', 'flow_accum',
-        'streams',
-        'nearest_stream_coords',
-        'geomorphons',
-        'ridges',
-        'nearest_ridge_coords',
-        'long_dem_stats',
-        'short_dem_stats',
-        'stream_dem_stats',
+        'streams', 'nearest_stream_coords',
+        'long_dem_stats', 'short_dem_stats',
         'long_hessian_stats',
-        'long_grad_stats',
-        'short_grad_stats',
-        'stream_grad_stats',
-        'stream_hessian_stats',
-        'wetness_index',
-        'd8_pointer',
-        'subbasins',
-        'divides',
-        'nearest_divide_coords'
+        'long_grad_stats', 'short_grad_stats',
+        'stream_grad_stats', 'stream_hessian_stats', 'stream_dem_stats',
+        'wetness_index', 'd8_pointer', 'subbasins',
+        'divides', 'nearest_divide_coords'
         ]
 
     wbt = whitebox.WhiteboxTools()
@@ -935,28 +922,6 @@ def generate_topo_features_for_tile(
             'func': nearest_stream_coords,
             'kwargs': {'dem': tile_paths['dem_cond'],
                        'streams': tile_paths['streams']}
-            },
-        'geomorphons': {
-            'func': wbt.geomorphons,
-            'kwargs': {'dem': tile_paths['dem_cond'],
-                       'search': 100,
-                       'threshold': 1.0,
-                       'fdist': 0,
-                       'skip': 0,
-                       'forms': True,
-                       'residuals': True
-                       }
-            },
-        'ridges': {
-            'func': extract_ridges,
-            'kwargs': {'geomorphons': tile_paths['geomorphons'],
-                       'ridge_size': ridge_size}
-
-            },
-        'nearest_ridge_coords': {
-            'func': nearest_ridge_coords,
-            'kwargs': {'dem': tile_paths['dem_cond'],
-                       'ridges': tile_paths['ridges']}
             },
         'short_dem_stats': {
             'func': local_stats,
