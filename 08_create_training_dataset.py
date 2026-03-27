@@ -15,9 +15,9 @@ Generate topographic and climate features for water table depth model training.
 This script performs the following tasks:
 
 1. Generates topographic features from NASADEM DEM for all tiles containing
-   water table depth observations (streams, ridges, terrain statistics)
+   water table depth observations (streams, divides, terrain statistics)
 2. Extracts topographic feature values at each observation point location
-3. Calculates derived features: distances to streams/ridges, elevation
+3. Calculates derived features: distances to streams/divides, elevation
    differences, and topographic ratios
 4. Adds basin-averaged NDVI and precipitation time series for each observation
 5. Exports the complete training dataset with all features
@@ -41,12 +41,12 @@ Storage Requirements
 Feature Extraction
 ------------------
 Topographic features derived from NASADEM:
-- point_z, stream_z, ridge_z: Elevations (m) at point, nearest stream, and
-  nearest ridge
-- stream_x, stream_y, ridge_x, ridge_y: Coordinates of nearest stream/ridge
-- dist_stream, dist_top: Euclidean distances (m) to stream and ridge
-- ratio_dist: Ratio of distance to stream vs. distance to ridge
-- alt_stream, alt_top: Elevation differences (m) from point to stream/ridge
+- point_z, stream_z, divide_z: Elevations (m) at point, nearest stream, and
+  nearest divide
+- stream_x, stream_y, divide_x, divide_y: Coordinates of nearest stream/divide
+- dist_stream, dist_top: Euclidean distances (m) to stream and divide
+- ratio_dist: Ratio of distance to stream vs. distance to divide
+- alt_stream, alt_divide: Elevation differences (m) from point to stream/divide
 - ratio_stream: Slope ratio (elevation difference / distance to stream)
 - Terrain statistics: Hessian and gradient statistics over multiple scales
   (long-range, short-range, stream-focused)
@@ -142,7 +142,6 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
         print_affix=progress,
         extract_streams_treshold=stream_treshold,
         gaussian_filter_sigma=filter_sigma,
-        ridge_size=30,
         )
 
 
@@ -198,17 +197,6 @@ for tile_idx, group in joined.groupby('tile_index'):
         gwl_gdf.loc[group.index, 'stream_x'] = values[:, 2]
         gwl_gdf.loc[group.index, 'stream_y'] = values[:, 3]
         gwl_gdf.loc[group.index, 'stream_z'] = values[:, 4]
-
-    name = 'nearest_ridge_coords'
-    tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
-    tif_path = tiles_cropped_dir / name / tile_name
-    with rasterio.open(tif_path) as src:
-        values = np.array(list(src.sample(coords)))
-        values[values == src.nodata] = np.nan
-
-        gwl_gdf.loc[group.index, 'ridge_x'] = values[:, 2]
-        gwl_gdf.loc[group.index, 'ridge_y'] = values[:, 3]
-        gwl_gdf.loc[group.index, 'ridge_z'] = values[:, 4]
 
     name = 'nearest_divide_coords'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
