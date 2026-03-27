@@ -283,11 +283,6 @@ gwl_gdf['dist_stream'] = (
     (gwl_gdf.point_y - gwl_gdf.stream_y)**2
     )**0.5
 
-gwl_gdf['dist_top'] = (
-    (gwl_gdf.point_x - gwl_gdf.ridge_x)**2 +
-    (gwl_gdf.point_y - gwl_gdf.ridge_y)**2
-    )**0.5
-
 gwl_gdf['dist_divide'] = (
     (gwl_gdf.point_x - gwl_gdf.divide_x)**2 +
     (gwl_gdf.point_y - gwl_gdf.divide_y)**2
@@ -298,8 +293,6 @@ gwl_gdf['ratio_dist'] = (
     )
 
 gwl_gdf['alt_stream'] = gwl_gdf.point_z - gwl_gdf.stream_z
-
-gwl_gdf['alt_top'] = gwl_gdf.ridge_z - gwl_gdf.point_z
 
 gwl_gdf['alt_divide'] = gwl_gdf.divide_z - gwl_gdf.point_z
 
