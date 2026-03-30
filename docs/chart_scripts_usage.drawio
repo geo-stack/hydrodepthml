@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.3.6 Chrome/140.0.7339.249 Electron/38.8.0 Safari/537.36" version="29.3.6">
   <diagram name="Page-1" id="EHzd1eoogBjulRqw7m7H">
-    <mxGraphModel dx="1426" dy="849" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="983" dy="586" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -94,13 +94,13 @@
           <mxGeometry height="80" width="145" x="340" y="640" as="geometry" />
         </mxCell>
         <mxCell id="OUIN07hWEChSqRsRtpa_-23" connectable="0" parent="1" style="group" value="" vertex="1">
-          <mxGeometry height="100" width="160" x="120" y="60" as="geometry" />
+          <mxGeometry height="220" width="180" x="120" y="50" as="geometry" />
         </mxCell>
-        <mxCell id="OUIN07hWEChSqRsRtpa_-24" parent="OUIN07hWEChSqRsRtpa_-23" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=25;" value="&lt;div&gt;&lt;i&gt;&lt;b&gt;&lt;font&gt;Note&lt;/font&gt;&lt;/b&gt;&lt;/i&gt;&lt;/div&gt;&lt;i&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/i&gt;" vertex="1">
-          <mxGeometry height="100" width="160" as="geometry" />
+        <mxCell id="OUIN07hWEChSqRsRtpa_-24" parent="OUIN07hWEChSqRsRtpa_-23" style="shape=note;whiteSpace=wrap;html=1;backgroundOutline=1;darkOpacity=0.05;size=25;" value="&lt;div&gt;&lt;i&gt;&lt;b&gt;&lt;font&gt;Note&lt;/font&gt;&lt;/b&gt;&lt;/i&gt;&lt;/div&gt;&lt;i&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;i&gt;&lt;br&gt;&lt;/i&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/i&gt;" vertex="1">
+          <mxGeometry height="170" width="180" y="4.5" as="geometry" />
         </mxCell>
-        <mxCell id="OUIN07hWEChSqRsRtpa_-25" parent="OUIN07hWEChSqRsRtpa_-23" style="text;whiteSpace=wrap;html=1;align=center;" value="&lt;i style=&quot;forced-color-adjust: none; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-family: Helvetica; font-size: 12px; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: transparent; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;&quot;&gt;Outputs from scripts 01, 02, and 11 are included in the repository. You should not need to run them.&lt;/i&gt;" vertex="1">
-          <mxGeometry height="70" width="140" x="10" y="27" as="geometry" />
+        <mxCell id="OUIN07hWEChSqRsRtpa_-25" parent="OUIN07hWEChSqRsRtpa_-23" style="text;whiteSpace=wrap;html=1;align=center;" value="&lt;i style=&quot;forced-color-adjust: none; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255)); font-family: Helvetica; font-size: 12px; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 400; letter-spacing: normal; orphans: 2; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: transparent; text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial;&quot;&gt;Outputs from scripts 01, 02, and 11 are included in the repository. You should not need to run them.&lt;/i&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;i&gt;01_process_usgs_coastal.py&lt;/i&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;i&gt;02_process_hydro_basins.py&lt;/i&gt;&lt;/div&gt;&lt;div style=&quot;text-align: left;&quot;&gt;&lt;i&gt;11_process_world_kopen.py&lt;/i&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="119" width="157.5" x="10.25" y="39" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
