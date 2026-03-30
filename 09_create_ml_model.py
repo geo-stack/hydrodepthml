@@ -25,26 +25,39 @@ from hdml.modeling import plot_pred_vs_obs
 
 model_path = datadir / 'model' / 'wtd_predict_model.pkl'
 
-
 wtd_path = datadir / 'model' / "wtd_obs_training_dataset.csv"
+
 if not wtd_path.exists():
     raise FileNotFoundError(
-        "Make sure to run 'create_training_dataset.py' before running this "
-        "script generate the 'wtd_obs_training_dataset.csv'."
+        "Make sure to run '08_create_training_dataset.py' before running "
+        "this script to generate your training dataset."
         )
 
 # %%
 
 df = pd.read_csv(wtd_path)
-df = df.dropna()
+
+# grad -> slope
+# hessian -> first derivative of the slope
+
+# short -> stats over 7 pixels window == 210 m -> halfwidth de 105 m
+# long -> stats over 41 pixels window = 1230 m -> halfwidth = 615 m
+# stream -> stats along the line between point and nearest stream
+
+# - elev: Elevation in meters from the raw, unmodified NASADEM DEM
+# - point_z: Elevation in meters from the smoothed and conditioned
+#            DEM (after artifact removal/filling)
+# - dist_stream: Euclidean distance to the nearest stream pixel in meters.
+#                dist_stream = ((point_x - stream_x)**2 +
+#                               (point_y - stream_y)**2
+#                               )**0.5
 
 features = [
+    'elev',
+    # 'point_z',
     'dist_stream',
-    'dist_top',
-    'ratio_dist',
-    'alt_stream',
-    'alt_top',
-    'ratio_stream',
+    'alt_stream',           # point_z - stream_z
+    'ratio_stream',         # (point_z - stream_z) / dist_stream
     'long_hessian_max',
     'long_hessian_mean',
     'long_hessian_var',
@@ -55,12 +68,42 @@ features = [
     'short_grad_max',
     'short_grad_var',
     'short_grad_mean',
-    'stream_grad_max',
-    'stream_grad_var',
-    'stream_grad_mean',
-    'stream_hessian_max',
+    # 'stream_grad_max',
+    # 'stream_grad_var',
+    # 'stream_grad_mean',
+    # 'stream_hessian_max',
     'ndvi',
     'precipitation',
+    'pre_mm_syr',  # average annual precipitation for sub-bassin
+    'tmp_dc_syr',  # average annual air temperature for sub-bassin
+    'pet_mm_syr',  # average annual potential evapotranspiration for sub-bassin
+    'wetness_index',
+    'ndvi_yrly_avg',
+    'precip_yrly_avg',
+    'dist_divide',
+    'alt_divide',
+    'ratio_stream_divide',  # dist_stream / (dist_divide + dist_stream)
+    # long dem stats (1230 m)
+    'long_dem_max',
+    'long_dem_mean',
+    'long_dem_min',
+    'long_dem_var',
+    'long_dem_skew',
+    'long_dem_kurt',
+    # short dem stats (210 m)
+    'short_dem_max',
+    'short_dem_mean',
+    'short_dem_min',
+    'short_dem_var',
+    'short_dem_skew',
+    'short_dem_kurt',
+    # stream stats
+    # 'stream_dem_max',
+    # 'stream_dem_mean',
+    # 'stream_dem_min',
+    # 'stream_dem_var',
+    # 'stream_dem_skew',
+    # 'stream_dem_kurt',
     ]
 
 
