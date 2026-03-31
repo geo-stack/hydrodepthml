@@ -263,7 +263,6 @@ for tile_idx, group in joined.groupby('tile_index'):
 
 
 # Calculate distances and ratios.
-
 print('Calculate distances and ratios...')
 
 gwl_gdf['dist_stream'] = (
@@ -275,10 +274,6 @@ gwl_gdf['dist_divide'] = (
     (gwl_gdf.point_x - gwl_gdf.divide_x)**2 +
     (gwl_gdf.point_y - gwl_gdf.divide_y)**2
     )**0.5
-
-gwl_gdf['ratio_dist'] = (
-    gwl_gdf.dist_stream / (np.maximum(gwl_gdf.dist_top, pixel_size))
-    )
 
 gwl_gdf['alt_stream'] = gwl_gdf.point_z - gwl_gdf.stream_z
 
