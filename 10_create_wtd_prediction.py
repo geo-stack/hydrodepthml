@@ -143,6 +143,10 @@ predict_bbox_gdf = gpd.GeoDataFrame(
     crs='EPSG:4326'
     ).to_crs('ESRI:102022')
 
+predict_bbox_gdf.to_file(
+    datadir / 'model' / 'predict_bbox.gpkg', driver='GPKG'
+    )
+
 nasadem_mosaic_path = datadir / 'dem' / 'nasadem_102022.vrt'
 if not nasadem_mosaic_path.exists():
     raise FileNotFoundError(
