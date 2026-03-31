@@ -179,8 +179,6 @@ features = [
     'tmp_dc_syr',
     'pet_mm_syr',
     'wetness_index',
-    'ndvi_yrly_avg',
-    'precip_yrly_avg',
     ]
 
 
