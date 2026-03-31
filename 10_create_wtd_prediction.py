@@ -294,7 +294,7 @@ for stats, band in stats_band_map.items():
 
 # %%
 tile_count = 0
-for _, tile_bbox_data in tiles_gdf.iterrows():
+for _, tile_bbox_data in predict_tiles_gdf.iterrows():
     tile_count += 1
 
     if total_tiles >= 100:
@@ -315,55 +315,15 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
 
     print(f'{progress} Extracting data from rasters for tile {tile_index}...')
 
-    tile_index = tile_bbox_data.tile_index
-    ty, tx = ast.literal_eval(tile_index)
+    for name, var, band in features_to_extract:
+        tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
+        tif_path = tiles_cropped_dir / name / tile_name
 
-    name = 'dem_cond'
-    tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
-
-    df = raster_to_dataframe(tiles_cropped_dir / name / tile_name)
-    df = df.rename(columns={'value': 'point_z'})
-
-    name = 'nearest_stream_coords'
-    tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
-    tif_path = tiles_cropped_dir / name / tile_name
-
-    df['stream_x'] = raster_to_flat_array(tif_path, band=2)
-    df['stream_y'] = raster_to_flat_array(tif_path, band=3)
-    df['stream_z'] = raster_to_flat_array(tif_path, band=4)
-
-    name = 'nearest_ridge_coords'
-    tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
-    tif_path = tiles_cropped_dir / name / tile_name
-
-    df['ridge_x'] = raster_to_flat_array(tif_path, band=2)
-    df['ridge_y'] = raster_to_flat_array(tif_path, band=3)
-    df['ridge_z'] = raster_to_flat_array(tif_path, band=4)
-
-    band_index_map = {
-        'min': 0,
-        'max': 1,
-        'mean': 2,
-        'var': 3,
-        'skew': 4,
-        'kurt': 5
-        }
-
-    name_bands = {
-        'long_hessian': ['max', 'mean', 'var', 'skew', 'kurt'],
-        'long_grad': ['mean', 'var'],
-        'short_grad': ['max', 'var', 'mean'],
-        'stream_grad': ['max', 'var', 'mean'],
-        'stream_hessian': ['max']
-        }
-
-    for name, bands in name_bands.items():
-        tile_name = f'{name}_stats_tile_{ty:03d}_{tx:03d}.tif'
-        tif_path = tiles_cropped_dir / f'{name}_stats' / tile_name
-
-        for band in bands:
-            index = band_index_map[band]
-            df[f'{name}_{band}'] = raster_to_flat_array(tif_path, band=index)
+        if band is None:
+            df = raster_to_dataframe(tif_path)
+            df = df.rename(columns={'value': var})
+        else:
+            df[var] = raster_to_flat_array(tif_path, band=band)
 
     name = 'hybas_id'
     tile_name = f'{name}_tile_{ty:03d}_{tx:03d}.tif'
@@ -381,23 +341,23 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
         (df.point_x - df.stream_x)**2 + (df.point_y - df.stream_y)**2
         )**0.5
 
-    df['dist_top'] = (
-        (df.point_x - df.ridge_x)**2 + (df.point_y - df.ridge_y)**2
+    df['dist_divide'] = (
+        (df.point_x - df.divide_x)**2 + (df.point_y - df.divide_y)**2
         )**0.5
-
-    df['ratio_dist'] = (
-        df.dist_stream / (np.maximum(df.dist_top, pixel_size))
-        )
 
     df['alt_stream'] = df.point_z - df.stream_z
 
-    df['alt_top'] = df.ridge_z - df.point_z
+    df['alt_divide'] = df.divide_z - df.point_z
 
     df['ratio_stream'] = (
         df['alt_stream'] / np.maximum(df['dist_stream'], pixel_size)
         )
 
-    print(f"{progress} Adding NDVI and precip data "
+    df['ratio_stream_divide'] = (
+        df.dist_stream / (df.dist_divide + df.dist_stream)
+        )
+
+    print(f"{progress} Adding climatic data data "
           f"to training dataset for tile {tile_index}...")
 
     ndvi_basin_means = pd.read_hdf(
@@ -438,6 +398,10 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
             precip_basin_means.loc[date_range, hybas_id]
             )
 
+        df.loc[mask, 'pre_mm_syr'] = basins_data.pre_mm_syr
+        df.loc[mask, 'tmp_dc_syr'] = basins_data.tmp_dc_syr
+        df.loc[mask, 'pet_mm_syr'] = basins_data.pet_mm_syr
+
     print(f'{progress} Saving predict dataframe to disk '
           f'for tile {tile_index}...')
 
@@ -448,16 +412,8 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
 
 # %% Predict water depth
 
-# Load the model.
-with open(MODEL_PATH, 'rb') as f:
-    data = pickle.load(f)
-
-    model = data['model']
-    features = data['feature_names']
-
-
 tile_count = 0
-for _, tile_bbox_data in tiles_gdf.iterrows():
+for _, tile_bbox_data in predict_tiles_gdf.iterrows():
     tile_count += 1
 
     tile_index = tile_bbox_data.tile_index
@@ -482,7 +438,7 @@ for _, tile_bbox_data in tiles_gdf.iterrows():
     nanmask = df.isnull().any(axis=1)
 
     wtd_predicted = np.full(len(df), np.nan, dtype='float32')
-    wtd_predicted[~nanmask] = model.predict(df.loc[~nanmask, features])
+    wtd_predicted[~nanmask] = model.predict(df.loc[~nanmask, model_features])
 
     # Save results.
     dem_path = (
