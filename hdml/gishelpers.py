@@ -443,8 +443,8 @@ def raster_to_dataframe(
     Returns
     -------
     pd.DataFrame
-        DataFrame with columns:  ['row', 'col', 'x', 'y', 'value']
-        where x, y are the geographic coordinates of pixel centers.
+        DataFrame with columns:  ['row', 'col', 'point_x', 'point_y', 'value']
+        where point_x, point_y are the geographic coordinates of pixel centers.
         All pixels are included (NaN values are not filtered out).
     """
     with rasterio.open(raster_path) as src:
