@@ -95,13 +95,13 @@ BASINS_PATH.mkdir(parents=True, exist_ok=True)
 
 # Extract the .zip archive.
 
-zip_path = BASINS_PATH / 'hybas_af_lev01-12_v1c.zip'
+zip_path = BASINS_PATH / 'BasinATLAS_Data_v10.gdb.zip'
 zip_fname = zip_path.name
-zip_url = 'https://www.hydrosheds.org/products/hydrobasins'
+zip_url = 'https://www.hydrosheds.org/hydroatlas'
 
 if not zip_path.exists():
     raise FileNotFoundError(
-        f"\n[HydroBASINS Database Missing]\n"
+        f"\n[BasinATLAS Database Missing]\n"
         f"\nCould not locate required ZIP archive:\n"
         f"    {zip_path}\n"
         f"\nTo resolve:\n"
@@ -111,7 +111,7 @@ if not zip_path.exists():
         f"     {BASINS_PATH}\n"
         )
 
-# Extract basins level 12 from the BasinATLAS.
+# Extract basins level 12 from the BasinATLAS database.
 extract_dir = BASINS_PATH / zip_path.stem
 if not extract_dir.exists():
     print("Extrating zip archive...", flush=True)
@@ -123,7 +123,7 @@ if not extract_dir.exists():
 # %%
 
 level = 12
-layer_name = f'hybas_af_lev{level:02d}_v1c'
+layer_name = f'BasinATLAS_v10_lev{level:02d}'
 
 # Clip the basins to the African continent.
 
@@ -131,8 +131,10 @@ africa_gdf = gpd.read_file(
     datadir / 'coastline' / 'africa_landmass_simple.gpkg'
     )
 
-print(f'Reading {layer_name} from {extract_dir.name}...', flush=True)
-basins_gdf = gpd.read_file(extract_dir, layer=layer_name)
+basins_all_path = extract_dir / 'BasinATLAS_v10.gdb'
+
+print(f'Reading {layer_name} from {basins_all_path.name}...', flush=True)
+basins_gdf = gpd.read_file(basins_all_path, layer=layer_name)
 print('Number of basins:', len(basins_gdf), flush=True)
 
 print('Projecting to ESRI:102022...', flush=True)
