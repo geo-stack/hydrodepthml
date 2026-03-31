@@ -161,7 +161,7 @@ with rasterio.open(nasadem_mosaic_path) as src:
 gwl_gdf = gpd.read_file(datadir / "wtd" / "wtd_obs_all.gpkg")
 
 tiles_gdf = gpd.read_file(datadir / "features" / "tiles_africa_geom.gpkg")
-tiles_gdf = filter_tiles(predict_bbox_gdf, tiles_gdf)
+predict_tiles_gdf = filter_tiles(predict_bbox_gdf, tiles_gdf)
 
 basins_path = datadir / 'basins' / 'basins_lvl12_102022.gpkg'
 basins_gdf = gpd.read_file(basins_path)
@@ -179,9 +179,9 @@ tiles_cropped_dir.mkdir(parents=True, exist_ok=True)
 # Generate topography-derived features for prediction tiles.
 # Previously generated tiles (from training or prediction runs) are skipped.
 
-total_tiles = len(tiles_gdf)
+total_tiles = len(predict_tiles_gdf)
 tile_count = 0
-for _, tile_bbox_data in tiles_gdf.iterrows():
+for _, tile_bbox_data in predict_tiles_gdf.iterrows():
     tile_count += 1
 
     if total_tiles >= 100:
@@ -216,7 +216,7 @@ output_dir.mkdir(parents=True, exist_ok=True)
 dem_dir = tiles_cropped_dir / 'dem_cond'
 
 tile_count = 0
-for _, tile_bbox_data in tiles_gdf.iterrows():
+for _, tile_bbox_data in predict_tiles_gdf.iterrows():
     tile_count += 1
 
     if total_tiles >= 100:
