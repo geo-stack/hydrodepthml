@@ -17,7 +17,12 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import (
+    RandomForestRegressor, HistGradientBoostingRegressor)
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
+from sklearn.svm import NuSVR
+import xgboost as xgb
 
 # ---- Local imports
 from hdml import __datadir__ as datadir
@@ -25,7 +30,7 @@ from hdml.modeling import plot_pred_vs_obs
 
 model_path = datadir / 'model' / 'wtd_predict_model.pkl'
 
-wtd_path = datadir / 'model' / "wtd_obs_training_dataset.csv"
+wtd_path = datadir / 'model' / 'wtd_obs_training_dataset_sig1_st500.csv'
 
 if not wtd_path.exists():
     raise FileNotFoundError(
@@ -34,6 +39,29 @@ if not wtd_path.exists():
         )
 
 df = pd.read_csv(wtd_path)
+
+# Set to True to train the model to predict absolute water-table elevation
+# (in meters above sea level). Set to False to train the model to predict
+# water-table depth (depth from the ground surface, in meters).
+PREDICT_ELEVATION = True
+
+MODELTYPE = [
+    'xgboost',          # 0
+    'support_vector',   # 1
+    'hist_grad_boost',  # 2
+    'kneighbors',       # 3
+    'random_forest'     # 4
+    ][0]
+
+TEST_COUNTRY = [
+    'Burkina',  # 0
+    'Guinee',   # 1
+    'Benin',    # 2
+    'Mali',     # 3
+    'Chad',     # 4
+    'Niger',    # 5
+    'Togo'      # 6
+    ][0]
 
 # %%
 
@@ -129,7 +157,10 @@ df = pd.read_csv(wtd_path)
 #     Average annual potential evapotranspiration (mm/year) for the sub-basin.
 # =============================================================================
 
-features = [
+# List of features to use for training the model.
+# Comment out features you do not want to use.
+
+FEATURES = [
     # ---- TOPOGRAPHIC AND SPATIAL FEATURES
     'elev',
     # 'point_z',
@@ -184,21 +215,144 @@ features = [
 
 # %%
 
-X_train = df[features]
+plt.close('all')
+
+
+keep_index = df[df.world_koppen == 3].index
+df_resample = df.loc[keep_index].copy()
+
+train_index = df_resample[(df_resample.country != TEST_COUNTRY)].index
+test_index = df_resample[(df_resample.country == TEST_COUNTRY)].index
+
+df_train = df_resample.loc[train_index]
+df_test = df_resample.loc[test_index]
+
+fig2, ax2 = plt.subplots()
+ax2.plot(df_train.LON, df_train.LAT, '.', color='orange')
+ax2.plot(df_test.LON, df_test.LAT, '.', color='blue')
+fig2.tight_layout()
+
+X_train = df_resample.loc[train_index, FEATURES].values
+X_test = df_resample.loc[test_index, FEATURES].values
+if PREDICT_ELEVATION:
+    y_train = (
+        df_resample.loc[train_index, 'elev'].values -
+        df_resample.loc[train_index, 'NS'].values
+        )
+    y_test = (
+        df_resample.loc[test_index, 'elev'].values -
+        df_resample.loc[test_index, 'NS'].values
+        )
+else:
+    y_train = df_resample.loc[train_index, 'NS'].values
+    y_test = df_resample.loc[test_index, 'NS'].values
+
+ss = StandardScaler()
+X_train = ss.fit_transform(X_train)
+X_test = ss.transform(X_test)
+
+if MODELTYPE == 'xgboost':
+    params = {'subsample': 0.5,
+              'reg_lambda': 2.5,
+              'reg_alpha': 1.5,
+              'n_estimators': 150,
+              'max_depth': 4,
+              'learning_rate': 0.1,
+              'gamma': 0.2,
+              'colsample_bytree': 0.9}
+
+    Cl = xgb_model = xgb.XGBRegressor(**params)
+elif MODELTYPE == 'support_vector':
+    Cl = svr = NuSVR(C=50, nu=0.95)
+elif MODELTYPE == 'hist_grad_boost':
+    Cl = HistGradientBoostingRegressor(
+        max_depth=4, loss='gamma', quantile=0.75
+        )
+elif MODELTYPE == 'kneighbors':
+    Cl = KNeighborsRegressor(n_neighbors=5)
+elif MODELTYPE == 'random_forest':
+    Cl = RandomForestRegressor(max_depth=4, n_estimators=1000)
+
+
+Cl.fit(X_train, y_train)
+
+
+# %%
+
+from sklearn.feature_selection import SequentialFeatureSelector
+
+knn = KNeighborsRegressor(n_neighbors=10)
+
+# Sélectionner les 3 meilleures caractéristiques en partant
+# de la totalité (Backward)
+sfs = SequentialFeatureSelector(knn, n_features_to_select=10, direction='backward')
+
+sfs.fit(X_train, y_train)
+
+print("\nLes 5 caractéristiques retenues par SBS :")
+# On récupère les indices des colonnes sélectionnées
+selected_features = np.array(FEATURES)[sfs.get_support()]
+print(selected_features)
+
+# %%
+# fig3 = plot_feature_importance(Cl.feature_importances_, features)
+
+# y_eval = Cl.predict(X_test)
+# classes = np.full(len(y_test), f'{test_country}')
+# axis = {'xmin': y_test.min(), 'xmax': y_test.max(),
+#         'ymin': y_test.min(), 'ymax': y_test.max()}
+# fig4 = plot_pred_vs_obs(
+#     y_test, y_eval, classes, axis=axis,
+#     suptitle='True vs Predicted values',
+#     plot_stats=True
+#     )
+# fig4.tight_layout()
+
+# y_eval = Cl.predict(X_train)
+# classes = np.full(len(y_eval), f'All but {test_country}')
+# fig5 = plot_pred_vs_obs(
+#     y_train, y_eval, classes, axis=axis,
+#     suptitle='True vs Predicted values',
+#     plot_stats=True
+#     )
+
+
+# %%
+
+# Train model on the entire dataset and save model to disk.
+
+X_train = df[FEATURES]
 y_train = df['NS']
 
-params = {
-    'n_estimators': 50,
-    'random_state': 42
-    }
+if MODELTYPE == 'xgboost':
+    params = {'subsample': 0.5,
+              'reg_lambda': 2.5,
+              'reg_alpha': 1.5,
+              'n_estimators': 150,
+              'max_depth': 4,
+              'learning_rate': 0.1,
+              'gamma': 0.2,
+              'colsample_bytree': 0.9}
 
-Cl = RandomForestRegressor(**params)
+    Cl = xgb_model = xgb.XGBRegressor(**params)
+elif MODELTYPE == 'support_vector':
+    Cl = svr = NuSVR(C=50, nu=0.95)
+elif MODELTYPE == 'hist_grad_boost':
+    Cl = HistGradientBoostingRegressor(
+        max_depth=4, loss='gamma', quantile=0.75
+        )
+elif MODELTYPE == 'kneighbors':
+    Cl = KNeighborsRegressor(n_neighbors=5)
+elif MODELTYPE == 'random_forest':
+    Cl = RandomForestRegressor(max_depth=4, n_estimators=1000)
+
+
 Cl.fit(X_train, y_train)
 
 # Save the model.
 model_data = {
     'model': Cl,
-    'feature_names': features,
+    'feature_names': FEATURES,
     'training_date': datetime.now().strftime('%Y-%m-%d')
     }
 with open(model_path, 'wb') as f:
@@ -206,10 +360,10 @@ with open(model_path, 'wb') as f:
 
 # %%
 
-importances = pd.DataFrame(columns=['importance'], index=features)
-for f in range(len(features)):
+importances = pd.DataFrame(columns=['importance'], index=FEATURES)
+for f in range(len(FEATURES)):
     importances.loc[
-        features[f], 'importance'
+        FEATURES[f], 'importance'
         ] = Cl.feature_importances_[f]
 importances = importances.sort_values(by='importance', ascending=False)
 
