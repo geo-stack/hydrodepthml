@@ -139,15 +139,6 @@ features = [
     'dist_divide',
     'alt_divide',
     'ratio_stream_divide',
-    # ---- CLIMATIC AND ENVIRONMENTAL FEATURES
-    'ndvi',
-    'precipitation',
-    'pre_mm_syr',
-    'tmp_dc_syr',
-    'pet_mm_syr',
-    'wetness_index',
-    'ndvi_yrly_avg',
-    'precip_yrly_avg',
     # ---- GEOMORPHOMETRIC STATISTICS
     'long_hessian_max',
     'long_hessian_mean',
@@ -181,6 +172,15 @@ features = [
     # 'stream_dem_var',
     # 'stream_dem_skew',
     # 'stream_dem_kurt',
+    # ---- CLIMATIC AND ENVIRONMENTAL FEATURES
+    'ndvi',
+    'precipitation',
+    'pre_mm_syr',
+    'tmp_dc_syr',
+    'pet_mm_syr',
+    'wetness_index',
+    'ndvi_yrly_avg',
+    'precip_yrly_avg',
     ]
 
 
