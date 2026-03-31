@@ -241,8 +241,58 @@ for _, tile_bbox_data in predict_tiles_gdf.iterrows():
         output_path=output_dir / tile_name
         )
 
+# %%
+
+# Load the model.
+with open(MODEL_PATH, 'rb') as f:
+    data = pickle.load(f)
+
+    model = data['model']
+    model_features = data['feature_names']
+
 # %% Extract pixels (from raster) to DataFrame
 
+stats_band_map = {
+    'min': 1,
+    'max': 2,
+    'mean': 3,
+    'var': 4,
+    'skew': 5,
+    'kurt': 6
+    }
+
+varnames = [
+    'short_dem',
+    'short_grad',
+    'short_hessian',
+    'long_dem',
+    'long_hessian',
+    'long_grad',
+    'stream_dem',
+    'stream_grad',
+    'stream_hessian',
+    ]
+
+features_to_extract = [
+    ('dem', 'elev', None),
+    ('dem_cond', 'point_z', 1),
+    ('nearest_stream_coords', 'stream_x', 3),
+    ('nearest_stream_coords', 'stream_y', 4),
+    ('nearest_stream_coords', 'stream_z', 5),
+    ('nearest_divide_coords', 'divide_x', 3),
+    ('nearest_divide_coords', 'divide_y', 4),
+    ('nearest_divide_coords', 'divide_z', 5),
+    ('wetness_index', 'wetness_index', 1),
+    ]
+
+for stats, band in stats_band_map.items():
+    for name in varnames:
+        if f'{name}_{stats}' in model_features:
+            features_to_extract.append(
+                (f'{name}_stats', f'{name}_{stats}', band)
+                )
+
+# %%
 tile_count = 0
 for _, tile_bbox_data in tiles_gdf.iterrows():
     tile_count += 1
