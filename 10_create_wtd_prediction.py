@@ -199,7 +199,6 @@ for _, tile_bbox_data in predict_tiles_gdf.iterrows():
         print_affix=progress,
         extract_streams_treshold=500,
         gaussian_filter_sigma=1,
-        ridge_size=30,
         )
 
 
