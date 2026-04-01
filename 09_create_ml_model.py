@@ -66,8 +66,6 @@ TEST_COUNTRY = [
 #
 # Topographic and Spatial Features
 # --------------------------------
-# elev:
-#     Elevation in meters from the raw, unmodified NASADEM DEM.
 # dist_stream:
 #     Euclidean distance to the nearest stream pixel in meters.
 #     dist_stream = ((point_x - stream_x)**2 + (point_y - stream_y)**2)**0.5
@@ -94,15 +92,6 @@ TEST_COUNTRY = [
 #
 # Geomorphometric Statistics
 # --------------------------
-# long_dem_*:
-#     Descriptive statistics of conditioned elevation (point_z) over a
-#     41-pixel window (1230 m -> 615 m halfwidth).
-# short_dem_*:
-#     Descriptive statistics of conditioned elevation (point_z) over a
-#     7-pixel window (210 m -> 105 m halfwidth).
-# stream_dem_*:
-#     Descriptive statistics of conditioned elevation (point_z) calculated
-#     along a Bresenham line between the point and the nearest stream.
 # long_grad_*:
 #     Descriptive statistics of the slope (first derivative of elevation)
 #     over a 41-pixel window (1230 m -> 615 m halfwidth).
@@ -145,8 +134,6 @@ TEST_COUNTRY = [
 
 FEATURES = [
     # ---- TOPOGRAPHIC AND SPATIAL FEATURES
-    'elev',
-    # 'point_z',
     'dist_stream',
     'alt_stream',
     'ratio_stream',
@@ -165,28 +152,10 @@ FEATURES = [
     'short_grad_max',
     'short_grad_var',
     'short_grad_mean',
-    'long_dem_max',
-    'long_dem_mean',
-    'long_dem_min',
-    'long_dem_var',
-    'long_dem_skew',
-    'long_dem_kurt',
-    'short_dem_max',
-    'short_dem_mean',
-    'short_dem_min',
-    'short_dem_var',
-    'short_dem_skew',
-    'short_dem_kurt',
     # 'stream_grad_max',
     # 'stream_grad_var',
     # 'stream_grad_mean',
     # 'stream_hessian_max',
-    # 'stream_dem_max',
-    # 'stream_dem_mean',
-    # 'stream_dem_min',
-    # 'stream_dem_var',
-    # 'stream_dem_skew',
-    # 'stream_dem_kurt',
     # ---- CLIMATIC AND ENVIRONMENTAL FEATURES
     'ndvi',
     'precipitation',
