@@ -118,8 +118,8 @@ INPUTFILES = {
     }
 
 gwl_gdf = create_wtd_obs_dataset(
-    input_filepaths=INPUTFILES,
-    bad_obs_path=datadir / 'wtd' / 'bad_obs_data.xlsx',
+    input_files=INPUTFILES,
+    bad_obs_file=datadir / 'wtd' / 'bad_obs_data.xlsx',
     clip_to_geom=datadir / 'coastline' / 'africa_landmass.gpkg'
     )
 

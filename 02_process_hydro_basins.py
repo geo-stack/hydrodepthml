@@ -10,23 +10,22 @@
 # =============================================================================
 
 """
-Extract and process HydroBASINS sub-basins for Africa.
+Extract and process BasinATLAS sub-basins for Africa.
 
 This script performs the following tasks:
 
 1. Extracts the specified basin level (default: level 12) from the
-   HydroBASINS Africa dataset
+   BasinATLAS dataset
 2. Reprojects basins to Africa Albers Equal Area Conic (ESRI:102022)
 3. Clips basins to the African continent using a two-step process:
    - First clips to Africa's bounding box for efficiency
    - Then clips to simplified African continent geometry for accuracy
-4. Exports clipped basins with full HydroBASINS attributes
+4. Exports clipped basins with full BasinATLAS attributes
 
-HydroBASINS is part of the HydroATLAS suite and provides standardized
-sub-basin geometries with attributes including climate (precipitation,
-temperature, evapotranspiration), hydrological (flow accumulation, stream
-order), land cover, and socio-economic indicators. These attributes are used
-as features for water table depth prediction.
+We use BasinATLAS instead of HydroBASINS because BasinATLAS provides the
+necessary climatic variables (like 'pre_mm_syr', 'tmp_dc_syr', and
+'pet_mm_syr') required for model training, whereas HydroBASINS only contains
+sub-basin geometries.
 
 Note: This script is OPTIONAL.
 
@@ -38,39 +37,43 @@ the script.
 
 Requirements
 ------------
-- Manual download of HydroBASINS Africa dataset (see Data Source below)
+- Manual download of the BasinATLAS dataset (see Data Source below)
 - The downloaded ZIP file must be placed in 'hdml/data/basins/'
 - Simplified Africa landmass geometry (see 'process_usgs_coastal.py')
 
 
 Storage Requirements
 --------------------
-- HydroBASINS ZIP archive (Africa): ~536 MB
-- Extracted shapefiles: temporary (deleted after processing)
+- BasinATLAS ZIP archive: ~1.2 GB (size may vary)
+- Extracted geodatabase: temporary (deleted after processing)
 - Output basin GeoPackage (level 12): ~349 MB
 
 
 Data Source
 -----------
-HydroBASINS Version 1c (Africa region, levels 1-12)
-Download: https://www.hydrosheds.org/products/hydrobasins
-Documentation: https://www.hydrosheds.org/products/hydroatlas
+BasinATLAS Version 1.0
+Download: https://www.hydrosheds.org/hydroatlas
+Documentation: https://www.hydrosheds.org/hydroatlas
 
-HydroBASINS is a global, standardized sub-basin boundary dataset derived from
-HydroSHEDS data.  It provides hierarchical basin geometries at 12 nested levels
+NOTE: Currently, the download link on the HydroSHEDS website for BasinATLAS may
+not be functioning. If you absolutely need the 'BasinATLAS_Data_v10.gdb.zip'
+file and it is still unavailable online, please contact info@geostack.ca.
+
+BasinATLAS is a global, standardized sub-basin boundary dataset derived from
+HydroSHEDS data. It provides hierarchical basin geometries at 12 nested levels
 with associated HydroATLAS attributes for water resources management, modeling,
 and environmental assessment.
 
 Basin levels range from 1 (largest basins) to 12 (smallest sub-basins).
 Level 12 provides the highest spatial resolution for basin-scale analysis.
 
-Required file: 'hybas_af_lev01-12_v1c.zip'
+Required file: 'BasinATLAS_Data_v10.gdb.zip'
 
 
 Outputs
 -------
 - 'basins/basins_lvl12_102022.gpkg':
-      African sub-basins at level 12 with full HydroBASINS attributes
+      African sub-basins at level 12 with full BasinATLAS attributes
       (ESRI:102022 projection)
 
 Note that all paths are relative to the repository's 'data/' directory
@@ -95,13 +98,13 @@ BASINS_PATH.mkdir(parents=True, exist_ok=True)
 
 # Extract the .zip archive.
 
-zip_path = BASINS_PATH / 'hybas_af_lev01-12_v1c.zip'
+zip_path = BASINS_PATH / 'BasinATLAS_Data_v10.gdb.zip'
 zip_fname = zip_path.name
-zip_url = 'https://www.hydrosheds.org/products/hydrobasins'
+zip_url = 'https://www.hydrosheds.org/hydroatlas'
 
 if not zip_path.exists():
     raise FileNotFoundError(
-        f"\n[HydroBASINS Database Missing]\n"
+        f"\n[BasinATLAS Database Missing]\n"
         f"\nCould not locate required ZIP archive:\n"
         f"    {zip_path}\n"
         f"\nTo resolve:\n"
@@ -111,7 +114,7 @@ if not zip_path.exists():
         f"     {BASINS_PATH}\n"
         )
 
-# Extract basins level 12 from the BasinATLAS.
+# Extract basins level 12 from the BasinATLAS database.
 extract_dir = BASINS_PATH / zip_path.stem
 if not extract_dir.exists():
     print("Extrating zip archive...", flush=True)
@@ -123,7 +126,7 @@ if not extract_dir.exists():
 # %%
 
 level = 12
-layer_name = f'hybas_af_lev{level:02d}_v1c'
+layer_name = f'BasinATLAS_v10_lev{level:02d}'
 
 # Clip the basins to the African continent.
 
@@ -131,8 +134,10 @@ africa_gdf = gpd.read_file(
     datadir / 'coastline' / 'africa_landmass_simple.gpkg'
     )
 
-print(f'Reading {layer_name} from {extract_dir.name}...', flush=True)
-basins_gdf = gpd.read_file(extract_dir, layer=layer_name)
+basins_all_path = extract_dir / 'BasinATLAS_v10.gdb'
+
+print(f'Reading {layer_name} from {basins_all_path.name}...', flush=True)
+basins_gdf = gpd.read_file(basins_all_path, layer=layer_name)
 print('Number of basins:', len(basins_gdf), flush=True)
 
 print('Projecting to ESRI:102022...', flush=True)
