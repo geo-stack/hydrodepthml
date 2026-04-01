@@ -263,7 +263,6 @@ for tile_idx, group in joined.groupby('tile_index'):
 
 
 # Calculate distances and ratios.
-
 print('Calculate distances and ratios...')
 
 gwl_gdf['dist_stream'] = (
@@ -275,10 +274,6 @@ gwl_gdf['dist_divide'] = (
     (gwl_gdf.point_x - gwl_gdf.divide_x)**2 +
     (gwl_gdf.point_y - gwl_gdf.divide_y)**2
     )**0.5
-
-gwl_gdf['ratio_dist'] = (
-    gwl_gdf.dist_stream / (np.maximum(gwl_gdf.dist_top, pixel_size))
-    )
 
 gwl_gdf['alt_stream'] = gwl_gdf.point_z - gwl_gdf.stream_z
 
@@ -318,18 +313,6 @@ for index, row in gwl_gdf.iterrows():
     # Add mean daily PRECIP values (at the basin scale).
     precip_values = precip_means_wtd_basins.loc[date_range, basin_id]
     gwl_gdf.loc[index, 'precipitation'] = np.mean(precip_values)
-
-    # Add yearly (2 years prior) average NDVI and precip average
-    # values (at the basin scale).
-    date_end = row.DATE
-    date_start = date_end - pd.Timedelta(days=360 * 2)
-    date_range = pd.date_range(date_start, date_end)
-
-    ndvi_values = ndvi_means_wtd_basins.loc[date_range, basin_id]
-    gwl_gdf.loc[index, 'ndvi_yrly_avg'] = np.nanmean(ndvi_values)
-
-    precip_values = precip_means_wtd_basins.loc[date_range, basin_id]
-    gwl_gdf.loc[index, 'precip_yrly_avg'] = np.nanmean(precip_values)
 
 
 # %%
