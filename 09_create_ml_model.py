@@ -17,8 +17,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import (
-    RandomForestRegressor, HistGradientBoostingRegressor)
+from sklearn.model_selection import GroupShuffleSplit
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 from sklearn.svm import NuSVR
@@ -40,18 +39,7 @@ if not wtd_path.exists():
 
 df = pd.read_csv(wtd_path)
 
-# Set to True to train the model to predict absolute water-table elevation
-# (in meters above sea level). Set to False to train the model to predict
-# water-table depth (depth from the ground surface, in meters).
-PREDICT_ELEVATION = True
-
-MODELTYPE = [
-    'xgboost',          # 0
-    'support_vector',   # 1
-    'hist_grad_boost',  # 2
-    'kneighbors',       # 3
-    'random_forest'     # 4
-    ][0]
+MODELTYPE = 'xgboost'  # 'xgboost' or 'support_vector'
 
 TEST_COUNTRY = [
     'Burkina',  # 0
@@ -259,15 +247,6 @@ if MODELTYPE == 'xgboost':
     Cl = xgb_model = xgb.XGBRegressor(**params)
 elif MODELTYPE == 'support_vector':
     Cl = svr = NuSVR(C=50, nu=0.95)
-elif MODELTYPE == 'hist_grad_boost':
-    Cl = HistGradientBoostingRegressor(
-        max_depth=4, loss='gamma', quantile=0.75
-        )
-elif MODELTYPE == 'kneighbors':
-    Cl = KNeighborsRegressor(n_neighbors=5)
-elif MODELTYPE == 'random_forest':
-    Cl = RandomForestRegressor(max_depth=4, n_estimators=1000)
-
 
 Cl.fit(X_train, y_train)
 
@@ -332,15 +311,6 @@ if MODELTYPE == 'xgboost':
     Cl = xgb_model = xgb.XGBRegressor(**params)
 elif MODELTYPE == 'support_vector':
     Cl = svr = NuSVR(C=50, nu=0.95)
-elif MODELTYPE == 'hist_grad_boost':
-    Cl = HistGradientBoostingRegressor(
-        max_depth=4, loss='gamma', quantile=0.75
-        )
-elif MODELTYPE == 'kneighbors':
-    Cl = KNeighborsRegressor(n_neighbors=5)
-elif MODELTYPE == 'random_forest':
-    Cl = RandomForestRegressor(max_depth=4, n_estimators=1000)
-
 
 Cl.fit(X_train, y_train)
 
