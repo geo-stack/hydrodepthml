@@ -144,11 +144,6 @@ TEST_COUNTRY = [
 #     Mean daily precipitation (mm) averaged over a period of time before
 #     each specific observation. The length of the averaged time window
 #     depends on the size of the watershed containing the observation point.
-# ndvi_yrly_avg:
-#     Mean basin NDVI averaged over the 2 years prior to the observation date.
-# precip_yrly_avg:
-#     Mean basin precipitation (mm) averaged over the 2 years prior to
-#     the observation date.
 # pre_mm_syr:
 #     Average annual precipitation (mm/year) for the sub-basin.
 # tmp_dc_syr:
@@ -170,6 +165,7 @@ FEATURES = [
     'dist_divide',
     'alt_divide',
     'ratio_stream_divide',
+    'wetness_index',
     # ---- GEOMORPHOMETRIC STATISTICS
     'long_hessian_max',
     'long_hessian_mean',
@@ -209,7 +205,6 @@ FEATURES = [
     'pre_mm_syr',
     'tmp_dc_syr',
     'pet_mm_syr',
-    'wetness_index',
     ]
 
 
