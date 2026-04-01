@@ -23,8 +23,9 @@ This script performs the following tasks:
 4. Exports clipped basins with full BasinATLAS attributes
 
 We use BasinATLAS instead of HydroBASINS because BasinATLAS provides the
-necessary climatic variables (like 'pre_mm_syr', 'tmp_dc_syr', and 'pet_mm_syr')
-required for model training, whereas HydroBASINS only contains sub-basin geometries.
+necessary climatic variables (like 'pre_mm_syr', 'tmp_dc_syr', and
+'pet_mm_syr') required for model training, whereas HydroBASINS only contains
+sub-basin geometries.
 
 Note: This script is OPTIONAL.
 
@@ -54,14 +55,14 @@ BasinATLAS Version 1.0
 Download: https://www.hydrosheds.org/hydroatlas
 Documentation: https://www.hydrosheds.org/hydroatlas
 
-*NOTE: Currently, the download link on the HydroSHEDS website for BasinATLAS
-may not be functioning. You must use a previously saved version of the
-'BasinATLAS_Data_v10.gdb.zip' file.*
+NOTE: Currently, the download link on the HydroSHEDS website for BasinATLAS may
+not be functioning. If you absolutely need the 'BasinATLAS_Data_v10.gdb.zip'
+file and it is still unavailable online, please contact info@geostack.ca.
 
 BasinATLAS is a global, standardized sub-basin boundary dataset derived from
 HydroSHEDS data. It provides hierarchical basin geometries at 12 nested levels
-with associated HydroATLAS attributes (climate, hydrology, etc.) for water
-resources management, modeling, and environmental assessment.
+with associated HydroATLAS attributes for water resources management, modeling,
+and environmental assessment.
 
 Basin levels range from 1 (largest basins) to 12 (smallest sub-basins).
 Level 12 provides the highest spatial resolution for basin-scale analysis.
