@@ -26,6 +26,7 @@ import xgboost as xgb
 # ---- Local imports
 from hdml import __datadir__ as datadir
 from hdml.modeling import plot_pred_vs_obs
+from hdml.ml_helpers import plot_feature_importance
 
 model_path = datadir / 'model' / 'wtd_predict_model.pkl'
 
@@ -48,11 +49,9 @@ TEST_COUNTRY = [
     'Mali',     # 3
     'Chad',     # 4
     'Niger',    # 5
-    'Togo'      # 6
-    ][0]
-
-# %%
-
+    'Togo',     # 6
+    None,       # 7
+    ][3]
 
 # =============================================================================
 # FEATURE DESCRIPTIONS
@@ -167,11 +166,126 @@ FEATURES = [
 
 # %%
 
+# Split training and test set.
+
 plt.close('all')
 
+df_resample = df.copy()
 
-keep_index = df[df.world_koppen == 3].index
-df_resample = df.loc[keep_index].copy()
+# Define features (X), target (y), and groups (HYBAS_ID) for the split.
+X = df_resample[FEATURES]
+y = df_resample['NS']
+
+groups = df_resample['HYBAS_ID']
+
+# Grouped split by watershed (20% of watersheds for the test set).
+gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+train_idx, test_idx = next(gss.split(X, y, groups))
+
+df_train = df_resample.iloc[train_idx]
+df_test = df_resample.iloc[test_idx]
+
+# Visualize the spatial distribution of the train and test sets.
+fig2, ax2 = plt.subplots()
+ax2.plot(df_train.LON, df_train.LAT, '.', color='orange', label='Train (80%)')
+ax2.plot(df_test.LON, df_test.LAT, '.', color='blue', label='Test (20%)')
+ax2.set_title("Spatial distribution (Split by HYBAS_ID)")
+ax2.legend()
+fig2.tight_layout()
+
+# Extract NumPy arrays for model training.
+X_train = X.iloc[train_idx].values
+X_test = X.iloc[test_idx].values
+y_train = y.iloc[train_idx].values
+y_test = y.iloc[test_idx].values
+
+if MODELTYPE == 'xgboost':
+    params = {
+        'subsample': 0.5,
+        'reg_lambda': 0.1,
+        'reg_alpha': 1.5,
+        'n_estimators': 300,
+        'max_depth': 4,
+        'learning_rate': 0.1,
+        'gamma': 0.2,
+        'colsample_bytree': 0.9,
+        }
+
+    params = {
+        'subsample': 0.7,
+        'reg_lambda': 2.5,
+        'reg_alpha': 1.5,
+        'n_estimators': 500,
+        'max_depth': 5,
+        'learning_rate': 0.2,
+        'gamma': 0.095,
+        'colsample_bytree': 0.5
+        }
+
+    params = {
+        'subsample': 0.8,
+        'reg_lambda': 1.0,
+        'reg_alpha': 0.1,
+        'n_estimators': 300,
+        'max_depth': 7,
+        'learning_rate': 0.05,
+        'gamma': 0.0,
+        'colsample_bytree': 0.8,
+        }
+
+    # params['objective'] = 'reg:absoluteerror'
+
+    Cl = xgb_model = xgb.XGBRegressor(**params)
+elif MODELTYPE == 'support_vector':
+    ss = StandardScaler()
+    X_train = ss.fit_transform(X_train)
+    X_test = ss.transform(X_test)
+
+    Cl = svr = NuSVR(C=50, nu=0.95)
+
+LOG_TRANSFORM = True
+
+if LOG_TRANSFORM:
+    Cl.fit(X_train, np.log1p(y_train))
+else:
+    Cl.fit(X_train, y_train)
+
+# Check feature importances and validate model fit.
+if MODELTYPE == 'xgboost':
+    fig3 = plot_feature_importance(Cl.feature_importances_, FEATURES)
+
+if LOG_TRANSFORM:
+    y_eval = np.expm1(Cl.predict(X_test))
+else:
+    y_eval = Cl.predict(X_test)
+
+classes = np.full(len(y_test), 'All countries (test)')
+axis = {'xmin': y_test.min(), 'xmax': y_test.max(),
+        'ymin': y_test.min(), 'ymax': y_test.max()}
+fig4 = plot_pred_vs_obs(
+    y_test, y_eval, classes, axis=axis,
+    suptitle='True vs Predicted values',
+    plot_stats=True
+    )
+fig4.tight_layout()
+
+if LOG_TRANSFORM:
+    y_eval = np.expm1(Cl.predict(X_train))
+else:
+    y_eval = Cl.predict(X_train)
+
+classes = np.full(len(y_eval), 'All countries (train)')
+fig5 = plot_pred_vs_obs(
+    y_train, y_eval, classes, axis=axis,
+    suptitle='True vs Predicted values',
+    plot_stats=True
+    )
+
+# %%
+# keep_index = df[df.world_koppen == 3].index
+# df_resample = df.loc[keep_index].copy()
+
+df_resample = df.copy()
 
 train_index = df_resample[(df_resample.country != TEST_COUNTRY)].index
 test_index = df_resample[(df_resample.country == TEST_COUNTRY)].index
@@ -193,21 +307,9 @@ ss = StandardScaler()
 X_train = ss.fit_transform(X_train)
 X_test = ss.transform(X_test)
 
-if MODELTYPE == 'xgboost':
-    params = {'subsample': 0.5,
-              'reg_lambda': 2.5,
-              'reg_alpha': 1.5,
-              'n_estimators': 150,
-              'max_depth': 4,
-              'learning_rate': 0.1,
-              'gamma': 0.2,
-              'colsample_bytree': 0.9}
 
-    Cl = xgb_model = xgb.XGBRegressor(**params)
-elif MODELTYPE == 'support_vector':
-    Cl = svr = NuSVR(C=50, nu=0.95)
 
-Cl.fit(X_train, y_train)
+
 
 
 # %%
