@@ -186,18 +186,8 @@ fig2.tight_layout()
 
 X_train = df_resample.loc[train_index, FEATURES].values
 X_test = df_resample.loc[test_index, FEATURES].values
-if PREDICT_ELEVATION:
-    y_train = (
-        df_resample.loc[train_index, 'elev'].values -
-        df_resample.loc[train_index, 'NS'].values
-        )
-    y_test = (
-        df_resample.loc[test_index, 'elev'].values -
-        df_resample.loc[test_index, 'NS'].values
-        )
-else:
-    y_train = df_resample.loc[train_index, 'NS'].values
-    y_test = df_resample.loc[test_index, 'NS'].values
+y_train = df_resample.loc[train_index, 'NS'].values
+y_test = df_resample.loc[test_index, 'NS'].values
 
 ss = StandardScaler()
 X_train = ss.fit_transform(X_train)
