@@ -280,76 +280,6 @@ fig5 = plot_pred_vs_obs(
     plot_stats=True
     )
 
-# %%
-# keep_index = df[df.world_koppen == 3].index
-# df_resample = df.loc[keep_index].copy()
-
-df_resample = df.copy()
-
-train_index = df_resample[(df_resample.country != TEST_COUNTRY)].index
-test_index = df_resample[(df_resample.country == TEST_COUNTRY)].index
-
-df_train = df_resample.loc[train_index]
-df_test = df_resample.loc[test_index]
-
-fig2, ax2 = plt.subplots()
-ax2.plot(df_train.LON, df_train.LAT, '.', color='orange')
-ax2.plot(df_test.LON, df_test.LAT, '.', color='blue')
-fig2.tight_layout()
-
-X_train = df_resample.loc[train_index, FEATURES].values
-X_test = df_resample.loc[test_index, FEATURES].values
-y_train = df_resample.loc[train_index, 'NS'].values
-y_test = df_resample.loc[test_index, 'NS'].values
-
-ss = StandardScaler()
-X_train = ss.fit_transform(X_train)
-X_test = ss.transform(X_test)
-
-
-
-
-
-
-# %%
-
-from sklearn.feature_selection import SequentialFeatureSelector
-
-knn = KNeighborsRegressor(n_neighbors=10)
-
-# Sélectionner les 3 meilleures caractéristiques en partant
-# de la totalité (Backward)
-sfs = SequentialFeatureSelector(knn, n_features_to_select=10, direction='backward')
-
-sfs.fit(X_train, y_train)
-
-print("\nLes 5 caractéristiques retenues par SBS :")
-# On récupère les indices des colonnes sélectionnées
-selected_features = np.array(FEATURES)[sfs.get_support()]
-print(selected_features)
-
-# %%
-# fig3 = plot_feature_importance(Cl.feature_importances_, features)
-
-# y_eval = Cl.predict(X_test)
-# classes = np.full(len(y_test), f'{test_country}')
-# axis = {'xmin': y_test.min(), 'xmax': y_test.max(),
-#         'ymin': y_test.min(), 'ymax': y_test.max()}
-# fig4 = plot_pred_vs_obs(
-#     y_test, y_eval, classes, axis=axis,
-#     suptitle='True vs Predicted values',
-#     plot_stats=True
-#     )
-# fig4.tight_layout()
-
-# y_eval = Cl.predict(X_train)
-# classes = np.full(len(y_eval), f'All but {test_country}')
-# fig5 = plot_pred_vs_obs(
-#     y_train, y_eval, classes, axis=axis,
-#     suptitle='True vs Predicted values',
-#     plot_stats=True
-#     )
-
 
 # %%
 
@@ -359,15 +289,6 @@ X_train = df[FEATURES]
 y_train = df['NS']
 
 if MODELTYPE == 'xgboost':
-    params = {'subsample': 0.5,
-              'reg_lambda': 2.5,
-              'reg_alpha': 1.5,
-              'n_estimators': 150,
-              'max_depth': 4,
-              'learning_rate': 0.1,
-              'gamma': 0.2,
-              'colsample_bytree': 0.9}
-
     Cl = xgb_model = xgb.XGBRegressor(**params)
 elif MODELTYPE == 'support_vector':
     Cl = svr = NuSVR(C=50, nu=0.95)
