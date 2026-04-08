@@ -169,17 +169,39 @@ FEATURES = [
 
 plt.close('all')
 
-df_resample = df.copy()
+if TEST_COUNTRY is not None:
+    df_resample = df.loc[df.country == TEST_COUNTRY].copy()
+else:
+    df_resample = df.copy()
+
+df_resample = df_resample.reset_index(drop=True)
 
 # Define features (X), target (y), and groups (HYBAS_ID) for the split.
 X = df_resample[FEATURES]
 y = df_resample['NS']
 
-groups = df_resample['HYBAS_ID']
 
-# Grouped split by watershed (20% of watersheds for the test set).
-gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
-train_idx, test_idx = next(gss.split(X, y, groups))
+from hdml.ml_helpers import plot_ns_distribution
+plot_ns_distribution(y.values)
+
+# %%
+
+plt.close('all')
+
+RANDOM_SPLIT = False
+
+if TEST_COUNTRY == 'Mali' and RANDOM_SPLIT is False:
+    train_idx = df_resample[df_resample.LON < -6].index.astype(int)
+    test_idx = df_resample[df_resample.LON > -6].index.astype(int)
+else:
+    # Grouped split by watershed (20% of watersheds for the test set).
+    groups = df_resample['HYBAS_ID']
+    gss = GroupShuffleSplit(
+        n_splits=1,
+        test_size=0.2,
+        random_state=42
+        )
+    train_idx, test_idx = next(gss.split(X, y, groups))
 
 df_train = df_resample.iloc[train_idx]
 df_test = df_resample.iloc[test_idx]
@@ -198,65 +220,30 @@ X_test = X.iloc[test_idx].values
 y_train = y.iloc[train_idx].values
 y_test = y.iloc[test_idx].values
 
-if MODELTYPE == 'xgboost':
-    params = {
-        'subsample': 0.5,
-        'reg_lambda': 0.1,
-        'reg_alpha': 1.5,
-        'n_estimators': 300,
-        'max_depth': 4,
-        'learning_rate': 0.1,
-        'gamma': 0.2,
-        'colsample_bytree': 0.9,
-        }
+params = {
+    'subsample': 0.8,
+    'reg_lambda': 1.0,
+    'reg_alpha': 0.3,
+    'n_estimators': 500,
+    'max_depth': 6,
+    'learning_rate': 0.45,
+    'gamma': 1,
+    'colsample_bytree': 0.75,
+    'early_stopping_rounds': 50
+    # 'objective': 'reg:absoluteerror'
+    }
 
-    params = {
-        'subsample': 0.7,
-        'reg_lambda': 2.5,
-        'reg_alpha': 1.5,
-        'n_estimators': 500,
-        'max_depth': 5,
-        'learning_rate': 0.2,
-        'gamma': 0.095,
-        'colsample_bytree': 0.5
-        }
-
-    params = {
-        'subsample': 0.8,
-        'reg_lambda': 1.0,
-        'reg_alpha': 0.1,
-        'n_estimators': 300,
-        'max_depth': 7,
-        'learning_rate': 0.05,
-        'gamma': 0.0,
-        'colsample_bytree': 0.8,
-        }
-
-    # params['objective'] = 'reg:absoluteerror'
-
-    Cl = xgb_model = xgb.XGBRegressor(**params)
-elif MODELTYPE == 'support_vector':
-    ss = StandardScaler()
-    X_train = ss.fit_transform(X_train)
-    X_test = ss.transform(X_test)
-
-    Cl = svr = NuSVR(C=50, nu=0.95)
-
-LOG_TRANSFORM = True
-
-if LOG_TRANSFORM:
-    Cl.fit(X_train, np.log1p(y_train))
-else:
-    Cl.fit(X_train, y_train)
+Cl = xgb_model = xgb.XGBRegressor(**params)
+Cl.fit(X_train, y_train,
+       eval_set=[(X_train, y_train), (X_test, y_test)],
+       verbose=False
+       )
 
 # Check feature importances and validate model fit.
 if MODELTYPE == 'xgboost':
     fig3 = plot_feature_importance(Cl.feature_importances_, FEATURES)
 
-if LOG_TRANSFORM:
-    y_eval = np.expm1(Cl.predict(X_test))
-else:
-    y_eval = Cl.predict(X_test)
+y_eval = Cl.predict(X_test)
 
 classes = np.full(len(y_test), 'All countries (test)')
 axis = {'xmin': y_test.min(), 'xmax': y_test.max(),
@@ -268,10 +255,7 @@ fig4 = plot_pred_vs_obs(
     )
 fig4.tight_layout()
 
-if LOG_TRANSFORM:
-    y_eval = np.expm1(Cl.predict(X_train))
-else:
-    y_eval = Cl.predict(X_train)
+y_eval = Cl.predict(X_train)
 
 classes = np.full(len(y_eval), 'All countries (train)')
 fig5 = plot_pred_vs_obs(
