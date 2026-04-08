@@ -141,16 +141,16 @@ FEATURES = [
     'ratio_stream_divide',
     'wetness_index',
     # ---- GEOMORPHOMETRIC STATISTICS
-    'long_hessian_max',
-    'long_hessian_mean',
-    'long_hessian_var',
-    'long_hessian_skew',
-    'long_hessian_kurt',
-    'long_grad_mean',
-    'long_grad_var',
-    'short_grad_max',
-    'short_grad_var',
-    'short_grad_mean',
+    # 'long_hessian_max',
+    # 'long_hessian_mean',
+    # 'long_hessian_var',
+    # 'long_hessian_skew',
+    # 'long_hessian_kurt',
+    # 'long_grad_mean',
+    # 'long_grad_var',
+    # 'short_grad_max',
+    # 'short_grad_var',
+    # 'short_grad_mean',
     # 'stream_grad_max',
     # 'stream_grad_var',
     # 'stream_grad_mean',
@@ -162,7 +162,6 @@ FEATURES = [
     'tmp_dc_syr',
     'pet_mm_syr',
     ]
-
 
 # %%
 
