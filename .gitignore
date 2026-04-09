@@ -14,7 +14,6 @@ data/predict/*
 data/coastline/*
 data/basins/*
 asiz/*
-old/*
 references/
 *.pkl
 
