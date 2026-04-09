@@ -30,13 +30,7 @@ import pandas as pd
 
 def plot_ns_distribution(depths):
 
-    std = np.std(depths)
-    mean = np.mean(depths)
-
-    # low_cutoff = mean - std
-    # high_cutoff = mean + std
-
-    # Percentile-based boundaries
+    # Percentile-based boundaries.
     low_cutoff = np.percentile(depths, 5)   # 10th percentile
     high_cutoff = np.percentile(depths, 70)  # 90th percentile
 
@@ -83,10 +77,6 @@ def plot_ns_distribution(depths):
                 )
 
     fig.tight_layout()
-
-
-
-
 
 
 def plot_feature_importance(importances: np.ndarray, features: list):
