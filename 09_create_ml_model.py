@@ -250,8 +250,7 @@ Cl.fit(X_train, y_train,
 fig_lc = plot_learning_curves(Cl)
 
 # Check feature importances and validate model fit.
-if MODELTYPE == 'xgboost':
-    fig3 = plot_feature_importance(Cl.feature_importances_, FEATURES)
+fig3 = plot_feature_importance(Cl.feature_importances_, FEATURES)
 
 y_eval = Cl.predict(X_test)
 
@@ -282,12 +281,12 @@ fig5 = plot_pred_vs_obs(
 X_train = df[FEATURES]
 y_train = df['NS']
 
-if MODELTYPE == 'xgboost':
-    Cl = xgb_model = xgb.XGBRegressor(**params)
-elif MODELTYPE == 'support_vector':
-    Cl = svr = NuSVR(C=50, nu=0.95)
+weights = np.ones(len(y_train))
+weights[y_train > 10] = 2
 
-Cl.fit(X_train, y_train)
+Cl = xgb_model = xgb.XGBRegressor(**params)
+
+Cl.fit(X_train, y_train, sample_weight=weights)
 
 # Save the model.
 model_data = {
