@@ -165,6 +165,12 @@ FEATURES = [
 
 # %%
 
+
+def eval_mean_error(y_true, y_pred):
+    me = np.mean(y_true - y_pred)
+    return float(me)
+
+
 # Split training and test set.
 
 plt.close('all')
@@ -184,11 +190,7 @@ y = df_resample['NS']
 from hdml.ml_helpers import plot_ns_distribution
 plot_ns_distribution(y.values)
 
-# %%
-
-plt.close('all')
-
-RANDOM_SPLIT = False
+RANDOM_SPLIT = True
 
 if TEST_COUNTRY == 'Mali' and RANDOM_SPLIT is False:
     train_idx = df_resample[df_resample.LON < -6].index.astype(int)
@@ -222,22 +224,74 @@ y_test = y.iloc[test_idx].values
 
 params = {
     'subsample': 0.8,
-    'reg_lambda': 1.0,
-    'reg_alpha': 0.3,
-    'n_estimators': 500,
-    'max_depth': 6,
-    'learning_rate': 0.45,
-    'gamma': 1,
     'colsample_bytree': 0.75,
-    'early_stopping_rounds': 50
-    # 'objective': 'reg:absoluteerror'
+
+    'reg_lambda': 2.0,
+    'reg_alpha': 0.5,
+
+    'max_depth': 5,
+
+    'n_estimators': 150,
+    'learning_rate': 0.05,
+    'gamma': 0.1,
+
+    'eval_metric': eval_mean_error,
     }
+
+
+weights = np.ones(len(y_train))
+weights[y_train > 10] = 2
 
 Cl = xgb_model = xgb.XGBRegressor(**params)
 Cl.fit(X_train, y_train,
+       sample_weight=weights,
        eval_set=[(X_train, y_train), (X_test, y_test)],
-       verbose=False
+       verbose=False,
        )
+
+# =============================================================================
+# 3. Graphique : RMSE (Axe Gauche) vs Mean Error (Axe Droit)
+# =============================================================================
+results = Cl.evals_result()
+
+fig_lc, ax_lc = plt.subplots(figsize=(10, 6))
+
+obj_name = list(results['validation_0'].keys())[0]
+
+# --- AXE PRINCIPAL (Gauche) : RMSE ---
+line1 = ax_lc.plot(results['validation_0'][obj_name],
+                   label='Train (RMSE)', color='orange', linestyle='-')
+line2 = ax_lc.plot(results['validation_1'][obj_name],
+                   label='Test (RMSE)', color='blue', linestyle='-')
+ax_lc.set_xlabel("Nombre d'arbres (Itérations)")
+ax_lc.set_ylabel('RMSE (Précision globale)', color='black')
+ax_lc.tick_params(axis='y', labelcolor='black')
+
+# --- AXE SECONDAIRE (Droite) : Mean Error (Biais) ---
+ax_me = ax_lc.twinx()
+
+# ON UTILISE LE NOM DE LA FONCTION COMME CLÉ ICI :
+line3 = ax_me.plot(results['validation_0']['eval_mean_error'],
+                   label='Train (Mean Error)', color='orange', linestyle=':')
+line4 = ax_me.plot(results['validation_1']['eval_mean_error'],
+                   label='Test (Mean Error)', color='blue', linestyle=':')
+
+ax_me.axhline(0, color='gray', linestyle='--', alpha=0.5, label='Zéro Biais')
+
+ax_me.set_ylabel('Mean Error (Biais : Pred - Obs)', color='dimgrey')
+ax_me.tick_params(axis='y', labelcolor='dimgrey')
+
+ax_lc.set_title('Learning Curves : RMSE (précision) vs Mean Error (biais)')
+
+lines = line1 + line2 + line3 + line4
+labels = [l.get_label() for l in lines]
+ax_lc.legend(lines, labels, loc='center right')
+
+fig_lc.tight_layout()
+plt.show()
+
+if hasattr(Cl, 'best_iteration'):
+    print('Best Iteration:', Cl.best_iteration)
 
 # Check feature importances and validate model fit.
 if MODELTYPE == 'xgboost':
