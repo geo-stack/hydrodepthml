@@ -303,7 +303,11 @@ fig4.tight_layout()
 
 y_eval = Cl.predict(X_train)
 
-classes = np.full(len(y_eval), 'All countries (train)')
+if TEST_COUNTRY is None:
+    classes = np.full(len(y_eval), 'All data (test)')
+else:
+    classes = np.full(len(y_eval), f'{TEST_COUNTRY} (test)')
+
 fig5 = plot_pred_vs_obs(
     y_train, y_eval, classes, axis=axis,
     suptitle='True vs Predicted values',
