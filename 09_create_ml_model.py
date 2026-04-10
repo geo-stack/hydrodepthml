@@ -53,7 +53,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GroupShuffleSplit
-from sklearn.svm import NuSVR
 import xgboost as xgb
 
 # ---- Local imports
@@ -234,7 +233,7 @@ else:
     gss = GroupShuffleSplit(
         n_splits=1,
         test_size=0.2,
-        random_state=42
+        random_state=12
         )
     train_idx, test_idx = next(gss.split(X, y, groups))
 
@@ -264,8 +263,8 @@ params = {
 
     'max_depth': 5,
 
-    'n_estimators': 150,
-    'learning_rate': 0.05,
+    'n_estimators': 300,
+    'learning_rate': 0.1,
     'gamma': 0.1,
 
     'eval_metric': eval_mean_error,
