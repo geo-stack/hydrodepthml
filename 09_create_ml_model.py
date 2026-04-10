@@ -288,13 +288,16 @@ fig3 = plot_feature_importance(Cl.feature_importances_, FEATURES)
 
 y_eval = Cl.predict(X_test)
 
-classes = np.full(len(y_test), 'All countries (test)')
-axis = {'xmin': y_test.min(), 'xmax': y_test.max(),
-        'ymin': y_test.min(), 'ymax': y_test.max()}
+if TEST_COUNTRY is None:
+    classes = np.full(len(y_test), 'All data (test)')
+else:
+    classes = np.full(len(y_test), f'{TEST_COUNTRY} (test)')
+
+axis = {'xmin': 0, 'xmax': 30, 'ymin': 0, 'ymax': 30}
 fig4 = plot_pred_vs_obs(
     y_test, y_eval, classes, axis=axis,
     suptitle='True vs Predicted values',
-    plot_stats=True
+    plot_stats=True,
     )
 fig4.tight_layout()
 
