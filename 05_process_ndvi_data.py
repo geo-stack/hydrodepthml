@@ -380,7 +380,7 @@ ndvi_means_wtd_basins = extract_basin_zonal_timeseries(
     basins_path=basins_path,
     year_start=year_start,
     year_end=year_end,
-    scale_factor=1,
+    scale_factor=0.0001,   # MODIS Int16 scale to physical NDVI
     basin_id_column='HYBAS_ID'
     )
 
